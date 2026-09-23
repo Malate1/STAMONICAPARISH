@@ -50,14 +50,44 @@ $weeks_label = static function ($value) {
     </div>
   </div>
 
-  <form id="booking-form" enctype="multipart/form-data" class="mt-6 space-y-6">
+  <form id="booking-form" enctype="multipart/form-data" class="mt-6" novalidate>
+    <div id="booking-wizard-progress" class="sticky top-16 z-20 mb-5 rounded-2xl border border-gray-100 bg-white/95 backdrop-blur shadow-sm px-4 sm:px-6 py-4">
+      <div class="grid grid-cols-3 gap-2 sm:gap-4">
+        <button type="button" class="wizard-progress-item flex items-center gap-2 sm:gap-3 text-left" data-progress-step="1" onclick="goToCompletedStep(1)">
+          <span class="wizard-progress-number w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-parish-700 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</span>
+          <span class="min-w-0">
+            <span class="wizard-progress-label block text-[11px] sm:text-sm font-semibold text-parish-800 truncate">Schedule</span>
+            <span class="hidden sm:block text-[10px] text-gray-400 mt-0.5">Choose availability</span>
+          </span>
+        </button>
+
+        <button type="button" class="wizard-progress-item flex items-center gap-2 sm:gap-3 text-left opacity-45 cursor-default" data-progress-step="2" onclick="goToCompletedStep(2)">
+          <span class="wizard-progress-number w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">2</span>
+          <span class="min-w-0">
+            <span class="wizard-progress-label block text-[11px] sm:text-sm font-semibold text-gray-500 truncate">Details</span>
+            <span class="hidden sm:block text-[10px] text-gray-400 mt-0.5">Booking information</span>
+          </span>
+        </button>
+
+        <button type="button" class="wizard-progress-item flex items-center gap-2 sm:gap-3 text-left opacity-45 cursor-default" data-progress-step="3" onclick="goToCompletedStep(3)">
+          <span class="wizard-progress-number w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">3</span>
+          <span class="min-w-0">
+            <span class="wizard-progress-label block text-[11px] sm:text-sm font-semibold text-gray-500 truncate">Review</span>
+            <span class="hidden sm:block text-[10px] text-gray-400 mt-0.5">Requirements & submit</span>
+          </span>
+        </button>
+      </div>
+      <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div id="wizard-progress-bar" class="h-full bg-parish-700 rounded-full transition-all duration-300" style="width:33.333%"></div>
+      </div>
+    </div>
     <input type="hidden" name="service_type_id" value="<?= $service['id'] ?>">
     <input type="hidden" name="booking_type" id="booking-type">
     <input type="hidden" name="schedule_start" id="schedule-start">
     <input type="hidden" name="schedule_rule_id" id="schedule-rule-id">
 
     <!-- Step 1: availability -->
-    <section class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <section class="wizard-step bg-white rounded-2xl border border-gray-100 overflow-hidden" data-step="1">
       <div class="px-6 sm:px-8 py-5 border-b border-gray-100 flex items-center gap-4">
         <div class="w-9 h-9 rounded-xl bg-parish-700 text-white flex items-center justify-center font-bold text-sm">1</div>
         <div>
@@ -186,11 +216,17 @@ $weeks_label = static function ($value) {
             <button type="button" onclick="clearSlotSelection()" class="text-xs text-white/60 hover:text-white"><i class="ph ph-x"></i> Change</button>
           </div>
         </div>
+
+        <div class="mt-6 pt-5 border-t border-gray-100 flex justify-end">
+          <button id="step1-next" type="button" onclick="nextStep()" disabled class="w-full sm:w-auto sm:min-w-[180px] inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition">
+            Next: Details <i class="ph ph-arrow-right"></i>
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- Step 2: booking details -->
-    <section class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <section class="wizard-step hidden bg-white rounded-2xl border border-gray-100 overflow-hidden" data-step="2">
       <div class="px-6 sm:px-8 py-5 border-b border-gray-100 flex items-center gap-4">
         <div class="w-9 h-9 rounded-xl bg-parish-50 text-parish-700 flex items-center justify-center font-bold text-sm">2</div>
         <div>
@@ -259,11 +295,20 @@ $weeks_label = static function ($value) {
         <?php else: ?>
           <textarea name="notes" rows="4" placeholder="Additional notes for the parish office" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm"></textarea>
         <?php endif; ?>
+
+        <div class="pt-5 mt-2 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+          <button type="button" onclick="previousStep()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">
+            <i class="ph ph-arrow-left"></i> Back
+          </button>
+          <button type="button" onclick="nextStep()" class="w-full sm:w-auto sm:min-w-[210px] inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold transition">
+            Next: Requirements <i class="ph ph-arrow-right"></i>
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- Step 3: requirements and submit -->
-    <section class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <section class="wizard-step hidden bg-white rounded-2xl border border-gray-100 overflow-hidden" data-step="3">
       <div class="px-6 sm:px-8 py-5 border-b border-gray-100 flex items-center gap-4">
         <div class="w-9 h-9 rounded-xl bg-parish-50 text-parish-700 flex items-center justify-center font-bold text-sm">3</div>
         <div>
@@ -273,6 +318,24 @@ $weeks_label = static function ($value) {
       </div>
 
       <div class="p-6 sm:p-8">
+        <div class="mb-6 rounded-2xl bg-parish-50 border border-parish-100 p-5">
+          <div class="flex items-start gap-4">
+            <div class="w-11 h-11 rounded-xl bg-white text-parish-700 border border-parish-100 flex items-center justify-center text-xl flex-shrink-0">
+              <i class="ph ph-calendar-check"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-[10px] uppercase tracking-wider text-parish-600 font-bold">Booking Summary</div>
+              <div class="font-semibold text-gray-900 mt-1"><?= html_escape($service['name']) ?></div>
+              <div id="review-schedule" class="text-sm text-gray-600 mt-1">Schedule not selected</div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <span id="review-type" class="px-2.5 py-1 rounded-full bg-white border border-parish-100 text-[11px] font-semibold text-parish-700">—</span>
+                <span id="review-fee" class="px-2.5 py-1 rounded-full bg-white border border-parish-100 text-[11px] font-semibold text-parish-700">—</span>
+              </div>
+            </div>
+            <button type="button" onclick="showWizardStep(1)" class="text-xs font-semibold text-parish-700 hover:text-parish-900 flex-shrink-0">Change</button>
+          </div>
+        </div>
+
         <?php if (!empty($requirements)): ?>
           <div class="space-y-3">
             <?php foreach ($requirements as $req): ?>
@@ -294,11 +357,16 @@ $weeks_label = static function ($value) {
           <div class="rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500">No online document uploads are configured for this service.</div>
         <?php endif; ?>
 
-        <div class="mt-6 border-t border-gray-100 pt-6">
-          <button id="submit-booking" type="submit" disabled class="w-full sm:w-auto sm:min-w-[240px] py-3.5 px-6 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition">
-            <i class="ph ph-paper-plane-tilt mr-1"></i> Submit Application
+        <div class="mt-6 border-t border-gray-100 pt-6 flex flex-col-reverse sm:flex-row sm:items-end sm:justify-between gap-4">
+          <button type="button" onclick="previousStep()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">
+            <i class="ph ph-arrow-left"></i> Back
           </button>
-          <p id="submit-help" class="text-xs text-gray-400 mt-2">Choose an available schedule first.</p>
+          <div class="w-full sm:w-auto sm:text-right">
+            <button id="submit-booking" type="submit" disabled class="w-full sm:w-auto sm:min-w-[240px] py-3.5 px-6 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition">
+              <i class="ph ph-paper-plane-tilt mr-1"></i> Submit Application
+            </button>
+            <p id="submit-help" class="text-xs text-gray-400 mt-2">Choose an available schedule first.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -308,6 +376,116 @@ $weeks_label = static function ($value) {
 <script>
 var selectedSlot = null;
 var currentBookingType = null;
+var currentWizardStep = 1;
+var maxReachedStep = 1;
+
+function scrollToWizard(){
+  var el = document.getElementById('booking-wizard-progress');
+  if(!el) return;
+  var y = el.getBoundingClientRect().top + window.pageYOffset - 76;
+  window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+}
+
+function updateWizardProgress(){
+  $('.wizard-progress-item').each(function(){
+    var step = parseInt($(this).data('progress-step'), 10);
+    var $number = $(this).find('.wizard-progress-number');
+    var $label = $(this).find('.wizard-progress-label');
+
+    $(this).removeClass('opacity-45 cursor-default');
+    $number.removeClass('bg-parish-700 text-white bg-emerald-100 text-emerald-700 bg-gray-100 text-gray-400');
+    $label.removeClass('text-parish-800 text-emerald-700 text-gray-500');
+
+    if(step === currentWizardStep){
+      $number.addClass('bg-parish-700 text-white');
+      $label.addClass('text-parish-800');
+    } else if(step <= maxReachedStep){
+      $number.addClass('bg-emerald-100 text-emerald-700');
+      $label.addClass('text-emerald-700');
+    } else {
+      $(this).addClass('opacity-45 cursor-default');
+      $number.addClass('bg-gray-100 text-gray-400');
+      $label.addClass('text-gray-500');
+    }
+  });
+
+  $('#wizard-progress-bar').css('width', (currentWizardStep * 33.333) + '%');
+}
+
+function showWizardStep(step, shouldScroll){
+  currentWizardStep = Math.max(1, Math.min(3, parseInt(step, 10) || 1));
+  $('.wizard-step').addClass('hidden');
+  $('.wizard-step[data-step="' + currentWizardStep + '"]').removeClass('hidden');
+  updateWizardProgress();
+  if(shouldScroll !== false) scrollToWizard();
+}
+
+function validateDetailsStep(){
+  var valid = true;
+  var firstInvalid = null;
+
+  $('.wizard-step[data-step="2"] [required]').each(function(){
+    var empty = String($(this).val() == null ? '' : $(this).val()).trim() === '';
+    var browserInvalid = this.validity ? !this.validity.valid : false;
+
+    $(this).removeClass('border-red-400 ring-2 ring-red-100');
+
+    if(empty || browserInvalid){
+      valid = false;
+      $(this).addClass('border-red-400 ring-2 ring-red-100');
+      if(!firstInvalid) firstInvalid = this;
+    }
+  });
+
+  if(!valid){
+    Swal.fire({
+      icon:'warning',
+      title:'Complete the required details',
+      text:'Please fill in the highlighted fields before continuing.',
+      confirmButtonColor:'#235a38'
+    }).then(function(){
+      if(firstInvalid) firstInvalid.focus();
+    });
+  }
+
+  return valid;
+}
+
+function nextStep(){
+  if(currentWizardStep === 1){
+    if(!selectedSlot){
+      Swal.fire({
+        icon:'warning',
+        title:'Choose an available schedule',
+        text:'Select an available date and time before continuing.',
+        confirmButtonColor:'#235a38'
+      });
+      return;
+    }
+  }
+
+  if(currentWizardStep === 2 && !validateDetailsStep()){
+    return;
+  }
+
+  if(currentWizardStep < 3){
+    maxReachedStep = Math.max(maxReachedStep, currentWizardStep + 1);
+    showWizardStep(currentWizardStep + 1);
+  }
+}
+
+function previousStep(){
+  if(currentWizardStep > 1){
+    showWizardStep(currentWizardStep - 1);
+  }
+}
+
+function goToCompletedStep(step){
+  step = parseInt(step, 10) || 1;
+  if(step <= maxReachedStep){
+    showWizardStep(step);
+  }
+}
 
 function peso(value){
   return '₱' + Number(value || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -381,7 +559,11 @@ function bindSlotButtons(){
     var typeLabel = selectedSlot.booking_type === 'regular' ? 'Regular / Parish Schedule' : 'Special Booking';
     $('#selected-schedule-label').text(selectedSlot.date_label + ' · ' + selectedSlot.time);
     $('#selected-schedule-meta').text(typeLabel + ' · ' + (selectedSlot.fee === 0 ? 'FREE' : peso(selectedSlot.fee)));
+    $('#review-schedule').text(selectedSlot.date_label + ' · ' + selectedSlot.time);
+    $('#review-type').text(typeLabel);
+    $('#review-fee').text(selectedSlot.fee === 0 ? 'FREE' : peso(selectedSlot.fee));
     $('#schedule-summary').removeClass('hidden');
+    $('#step1-next').prop('disabled', false);
     $('#submit-booking').prop('disabled', false);
     $('#submit-help').text(selectedSlot.fee === 0 ? 'No booking fee is assigned to this selected schedule.' : 'Applicable booking fee: ' + peso(selectedSlot.fee));
   });
@@ -392,7 +574,14 @@ function clearSlotSelection(){
   $('#schedule-start, #schedule-rule-id').val('');
   $('.available-slot').removeClass('border-parish-600 ring-2 ring-parish-100 bg-parish-50');
   $('#schedule-summary').addClass('hidden');
+  $('#review-schedule').text('Schedule not selected');
+  $('#review-type, #review-fee').text('—');
+  $('#step1-next').prop('disabled', true);
   $('#submit-booking').prop('disabled', true);
+  if(currentWizardStep > 1){
+    maxReachedStep = 1;
+    showWizardStep(1, false);
+  }
   $('#submit-help').text('Choose an available schedule first.');
 }
 
@@ -498,6 +687,10 @@ function loadSpecialSlots(date, dateLabel){
 $('#booking-form').on('submit', function(e){
   e.preventDefault();
 
+  if(currentWizardStep !== 3){
+    return;
+  }
+
   if(!selectedSlot){
     Swal.fire({
       icon:'warning',
@@ -561,6 +754,12 @@ $('#booking-form').on('submit', function(e){
 });
 
 $(function(){
+  showWizardStep(1, false);
+
+  $('.wizard-step[data-step="2"] [required]').on('input change', function(){
+    $(this).removeClass('border-red-400 ring-2 ring-red-100');
+  });
+
   <?php if ($has_regular): ?>
     setBookingType('regular');
   <?php elseif ($allow_special): ?>
