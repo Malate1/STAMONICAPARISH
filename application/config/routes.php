@@ -69,6 +69,7 @@ $route['events/(:any)']              = 'home/event_detail/$1';
 $route['ministries']                 = 'home/ministries';
 $route['ministries/(:any)']          = 'home/ministry_detail/$1';
 $route['priests']                    = 'home/priests';
+$route['prayers']                    = 'home/prayers';
 $route['about']                      = 'home/about';
 $route['contact']                    = 'home/contact';
 $route['donate']                     = 'home/donate';

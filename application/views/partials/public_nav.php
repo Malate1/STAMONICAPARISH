@@ -15,6 +15,7 @@ $secondary_links = [
     'events' => ['label' => 'Events', 'icon' => 'ph-calendar-star'],
     'ministries' => ['label' => 'Ministries', 'icon' => 'ph-users-three'],
     'priests' => ['label' => 'Our Priests', 'icon' => 'ph-church'],
+    'prayers' => ['label' => 'Prayers & Novena', 'icon' => 'ph-hands-praying'],
     'about' => ['label' => 'Heritage', 'icon' => 'ph-landmark'],
 ];
 
@@ -25,6 +26,7 @@ $all_links = [
     'events' => 'Events',
     'ministries' => 'Ministries',
     'priests' => 'Our Priests',
+    'prayers' => 'Prayers & Novena',
     'about' => 'Heritage',
     'contact' => 'Visit & Contact',
 ];
@@ -108,7 +110,7 @@ foreach (array_keys($secondary_links) as $route) {
         <?php endforeach; ?>
 
         <!-- Full secondary nav only on very wide screens -->
-        <div class="hidden 2xl:flex items-center gap-1">
+        <div class="hidden min-[1750px]:flex items-center gap-1">
           <?php foreach ($secondary_links as $route => $meta): ?>
             <a href="<?= site_url($route) ?>"
                class="px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition <?= $is_active($route) ? 'bg-parish-50 text-parish-800' : 'text-gray-600 hover:text-parish-800 hover:bg-stonewarm-50' ?>">
@@ -118,7 +120,7 @@ foreach (array_keys($secondary_links) as $route) {
         </div>
 
         <!-- Compact "More" dropdown for standard desktop widths -->
-        <div class="relative 2xl:hidden" @click.outside="moreOpen = false">
+        <div class="relative min-[1750px]:hidden" @click.outside="moreOpen = false">
           <button
             type="button"
             @click="moreOpen = !moreOpen"

@@ -79,6 +79,11 @@ class Home extends Public_Controller
         $this->render_public('public/priests', $data);
     }
 
+    public function prayers()
+    {
+        $this->render_public('public/prayers');
+    }
+
     public function about()
     {
         $this->render_public('public/about');
