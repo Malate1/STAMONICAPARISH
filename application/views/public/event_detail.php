@@ -1,0 +1,74 @@
+<?php
+$hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Church_Alburquerque_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
+?>
+<article>
+  <section class="relative overflow-hidden bg-parish-900 min-h-[340px] flex items-end">
+    <img src="<?= $hero_img ?>" alt="" class="absolute inset-0 w-full h-full object-cover opacity-35">
+    <div class="absolute inset-0 bg-gradient-to-r from-parish-900 via-parish-900/85 to-parish-900/40"></div>
+    <div class="relative max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-14 text-white">
+      <a href="<?= site_url('events') ?>" class="inline-flex items-center gap-2 text-sm text-white/65 hover:text-white transition"><i class="ph ph-arrow-left"></i> Back to Events</a>
+      <div class="mt-6 flex items-center gap-4">
+        <div class="w-20 h-20 rounded-2xl bg-white text-parish-900 flex flex-col items-center justify-center shadow-lg flex-shrink-0">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-gold-600"><?= date('M', strtotime($item['event_date'])) ?></div>
+          <div class="text-3xl font-bold leading-none"><?= date('d', strtotime($item['event_date'])) ?></div>
+        </div>
+        <div>
+          <?php if ($item['category']): ?><div class="text-[11px] text-gold-200 font-semibold uppercase tracking-wider"><?= html_escape($item['category']) ?></div><?php endif; ?>
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight leading-tight mt-1"><?= html_escape($item['title']) ?></h1>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/65">
+        <span class="inline-flex items-center gap-2"><i class="ph ph-calendar-blank"></i><?= format_date($item['event_date']) ?><?= $item['event_time'] ? ', ' . date('g:i A', strtotime($item['event_time'])) : '' ?></span>
+        <span class="inline-flex items-center gap-2"><i class="ph ph-map-pin"></i><?= html_escape($item['location'] ?: 'TBA') ?></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+    <div class="grid lg:grid-cols-[1fr_.42fr] gap-8">
+      <div class="rounded-[2rem] bg-white border border-stonewarm-200 p-7 sm:p-10 shadow-soft">
+        <div class="heritage-kicker text-gold-600">About this event</div>
+        <div class="prose prose-sm sm:prose max-w-none mt-5 text-gray-700 leading-relaxed whitespace-pre-line">
+          <?= nl2br(html_escape($item['description'])) ?>
+        </div>
+      </div>
+
+      <aside class="space-y-4">
+        <div class="rounded-3xl bg-parish-50 border border-parish-100 p-6">
+          <div class="heritage-kicker text-gold-600">Event details</div>
+          <div class="mt-5 space-y-4 text-sm">
+            <div class="flex gap-3"><i class="ph ph-calendar-blank text-parish-700 text-lg"></i><div><div class="font-semibold text-gray-800"><?= format_date($item['event_date']) ?></div><div class="text-gray-500 mt-0.5"><?= $item['event_time'] ? date('g:i A', strtotime($item['event_time'])) : 'Time to be announced' ?></div></div></div>
+            <div class="flex gap-3"><i class="ph ph-map-pin text-parish-700 text-lg"></i><div><div class="font-semibold text-gray-800"><?= html_escape($item['location'] ?: 'TBA') ?></div><div class="text-gray-500 mt-0.5">Alburquerque, Bohol</div></div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <?php if ($item['allow_registration']): ?>
+    <div class="mt-8 rounded-[2rem] bg-parish-900 text-white p-7 sm:p-9" x-data="{ submitting: false }">
+      <div class="grid lg:grid-cols-[.7fr_1.3fr] gap-7 items-center">
+        <div>
+          <div class="heritage-kicker text-gold-300">Join this activity</div>
+          <h2 class="text-2xl font-bold mt-2">Register for this event</h2>
+          <p class="text-sm text-white/60 mt-2"><?= $registration_count ?><?= $item['registration_limit'] ? ' / ' . $item['registration_limit'] : '' ?> registered</p>
+        </div>
+        <form id="event-register-form" class="grid sm:grid-cols-2 gap-3">
+          <input type="hidden" name="event_id" value="<?= $item['id'] ?>">
+          <input required name="full_name" placeholder="Full Name" class="px-4 py-3 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-gold-300 outline-none">
+          <input required name="contact_number" placeholder="Contact Number" class="px-4 py-3 rounded-xl border border-white/15 bg-white/10 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-gold-300 outline-none">
+          <button :disabled="submitting" type="submit" class="sm:col-span-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold transition">Register for Event</button>
+        </form>
+      </div>
+    </div>
+    <script>
+      $('#event-register-form').on('submit', function(e){
+        e.preventDefault();
+        $.post('<?= site_url('home/ajax_register_event') ?>', $(this).serialize(), function(res){
+          if(res.success){ Swal.fire({icon:'success', title:'Registered!', text: res.message, confirmButtonColor:'#235a38'}); }
+          else { toastr.error(res.message); }
+        });
+      });
+    </script>
+    <?php endif; ?>
+  </section>
+</article>
