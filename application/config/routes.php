@@ -70,6 +70,7 @@ $route['ministries']                 = 'home/ministries';
 $route['ministries/(:any)']          = 'home/ministry_detail/$1';
 $route['priests']                    = 'home/priests';
 $route['prayers']                    = 'home/prayers';
+$route['st-monica']                  = 'home/st_monica';
 $route['about']                      = 'home/about';
 $route['contact']                    = 'home/contact';
 $route['donate']                     = 'home/donate';

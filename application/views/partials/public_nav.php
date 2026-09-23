@@ -16,6 +16,7 @@ $secondary_links = [
     'ministries' => ['label' => 'Ministries', 'icon' => 'ph-users-three'],
     'priests' => ['label' => 'Our Priests', 'icon' => 'ph-church'],
     'prayers' => ['label' => 'Prayers & Novena', 'icon' => 'ph-hands-praying'],
+    'st-monica' => ['label' => 'Life of St. Monica', 'icon' => 'ph-book-open-text'],
     'about' => ['label' => 'Heritage', 'icon' => 'ph-landmark'],
 ];
 
@@ -27,6 +28,7 @@ $all_links = [
     'ministries' => 'Ministries',
     'priests' => 'Our Priests',
     'prayers' => 'Prayers & Novena',
+    'st-monica' => 'Life of St. Monica',
     'about' => 'Heritage',
     'contact' => 'Visit & Contact',
 ];

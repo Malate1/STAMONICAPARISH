@@ -106,13 +106,19 @@ $novena_days = [
         <span x-show="lang === 'ceb'" x-cloak>Yano nga giya sa debosyon alang sa personal nga pag-ampo, pamilya, ug mga grupo sa parokya.</span>
       </p>
 
-      <div class="mt-7 inline-flex rounded-full bg-white/10 backdrop-blur border border-white/15 p-1">
-        <button @click="lang='en'" class="px-4 py-2 rounded-full text-sm font-semibold transition" :class="lang === 'en' ? 'bg-white text-parish-900 shadow-sm' : 'text-white/70 hover:text-white'">
-          English
-        </button>
-        <button @click="lang='ceb'" class="px-4 py-2 rounded-full text-sm font-semibold transition" :class="lang === 'ceb' ? 'bg-white text-parish-900 shadow-sm' : 'text-white/70 hover:text-white'">
-          Bisaya / Cebuano
-        </button>
+      <div class="mt-7 flex flex-wrap items-center gap-3">
+        <div class="inline-flex rounded-full bg-white/10 backdrop-blur border border-white/15 p-1">
+          <button @click="lang='en'" class="px-4 py-2 rounded-full text-sm font-semibold transition" :class="lang === 'en' ? 'bg-white text-parish-900 shadow-sm' : 'text-white/70 hover:text-white'">
+            English
+          </button>
+          <button @click="lang='ceb'" class="px-4 py-2 rounded-full text-sm font-semibold transition" :class="lang === 'ceb' ? 'bg-white text-parish-900 shadow-sm' : 'text-white/70 hover:text-white'">
+            Bisaya / Cebuano
+          </button>
+        </div>
+        <a href="<?= site_url('st-monica') ?>" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/20 bg-white/5 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition">
+          <i class="ph ph-book-open-text"></i>
+          Life of St. Monica
+        </a>
       </div>
     </div>
   </div>

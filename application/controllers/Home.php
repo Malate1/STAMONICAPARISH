@@ -84,6 +84,11 @@ class Home extends Public_Controller
         $this->render_public('public/prayers');
     }
 
+    public function st_monica()
+    {
+        $this->render_public('public/st_monica', ['page_title' => 'Life of St. Monica']);
+    }
+
     public function about()
     {
         $this->render_public('public/about');

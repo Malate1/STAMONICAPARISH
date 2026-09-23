@@ -26,6 +26,7 @@
           <li><a href="<?= site_url('announcements') ?>" class="hover:text-gold-200 transition">Announcements</a></li>
           <li><a href="<?= site_url('events') ?>" class="hover:text-gold-200 transition">Parish Events</a></li>
           <li><a href="<?= site_url('priests') ?>" class="hover:text-gold-200 transition">Our Priests</a></li>
+          <li><a href="<?= site_url('st-monica') ?>" class="hover:text-gold-200 transition">Life of St. Monica</a></li>
           <li><a href="<?= site_url('prayers') ?>" class="hover:text-gold-200 transition">Prayers &amp; Novena</a></li>
           <li><a href="<?= site_url('contact') ?>" class="hover:text-gold-200 transition">Plan Your Visit</a></li>
         </ul>

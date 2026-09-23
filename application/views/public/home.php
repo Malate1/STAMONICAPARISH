@@ -189,23 +189,43 @@ $convent_img = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Santa_Monica
 
 <!-- Patronal devotion -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-  <a href="<?= site_url('prayers') ?>" class="group block rounded-[2rem] overflow-hidden bg-gradient-to-r from-parish-900 via-parish-800 to-parish-700 text-white shadow-heritage">
-    <div class="p-7 sm:p-9 lg:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-7">
-      <div class="flex items-start gap-5 max-w-3xl">
-        <div class="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 text-gold-300 flex items-center justify-center text-3xl flex-shrink-0">
-          <i class="ph ph-hands-praying"></i>
+  <div class="grid lg:grid-cols-2 gap-4">
+    <a href="<?= site_url('st-monica') ?>" class="group block rounded-[2rem] overflow-hidden bg-gradient-to-r from-parish-900 via-parish-800 to-parish-700 text-white shadow-heritage">
+      <div class="p-7 sm:p-9 h-full flex flex-col justify-between gap-8">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 text-gold-300 flex items-center justify-center text-3xl flex-shrink-0">
+            <i class="ph ph-book-open-text"></i>
+          </div>
+          <div>
+            <div class="heritage-kicker text-gold-300">Our patroness</div>
+            <h2 class="text-2xl sm:text-3xl font-bold mt-2">The Life of St. Monica</h2>
+            <p class="text-white/65 mt-2 leading-relaxed">Discover her story of family, patient love, perseverance, and faithful prayer — in English or Bisaya / Cebuano.</p>
+          </div>
         </div>
-        <div>
-          <div class="heritage-kicker text-gold-300">Devotion to our patroness</div>
-          <h2 class="text-2xl sm:text-3xl font-bold mt-2">Prayers &amp; Novena to St. Monica</h2>
-          <p class="text-white/65 mt-2 leading-relaxed">Pray the nine-day novena and family prayers in English or Bisaya / Cebuano.</p>
+        <div class="inline-flex items-center gap-2 font-semibold text-gold-200 group-hover:text-white transition">
+          Read Her Story <i class="ph ph-arrow-right group-hover:translate-x-0.5 transition-transform"></i>
         </div>
       </div>
-      <div class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white text-parish-900 font-semibold flex-shrink-0 group-hover:bg-gold-50 transition">
-        Open Prayer Guide <i class="ph ph-arrow-right group-hover:translate-x-0.5 transition-transform"></i>
+    </a>
+
+    <a href="<?= site_url('prayers') ?>" class="group block rounded-[2rem] overflow-hidden bg-gold-50 border border-gold-100 text-parish-900 shadow-soft">
+      <div class="p-7 sm:p-9 h-full flex flex-col justify-between gap-8">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-white text-gold-600 flex items-center justify-center text-3xl flex-shrink-0 shadow-sm">
+            <i class="ph ph-hands-praying"></i>
+          </div>
+          <div>
+            <div class="heritage-kicker text-gold-700">Devotion to our patroness</div>
+            <h2 class="text-2xl sm:text-3xl font-bold mt-2">Prayers &amp; Novena to St. Monica</h2>
+            <p class="text-gray-600 mt-2 leading-relaxed">Pray the nine-day novena and family prayers in English or Bisaya / Cebuano.</p>
+          </div>
+        </div>
+        <div class="inline-flex items-center gap-2 font-semibold text-parish-700 group-hover:text-parish-900 transition">
+          Open Prayer Guide <i class="ph ph-arrow-right group-hover:translate-x-0.5 transition-transform"></i>
+        </div>
       </div>
-    </div>
-  </a>
+    </a>
+  </div>
 </section>
 
 <!-- Quick parish services -->
