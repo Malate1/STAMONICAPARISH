@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
+<link rel="shortcut icon" href="<?= base_url('favicon.svg') ?>">
 <meta name="theme-color" content="#173f2b">
 <title><?= isset($page_title) ? $page_title . ' | ' : '' ?>Sta. Monica Parish Church</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

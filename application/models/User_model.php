@@ -58,16 +58,35 @@ class User_model extends CI_Model
         return $this->db->where('role_id', $role_id)->order_by('first_name')->get($this->table)->result_array();
     }
 
-    public function priests()
+    public function priests($limit = null)
     {
-        return $this->db->select('users.*, priest_profiles.title, priest_profiles.position, priest_profiles.bio, priest_profiles.is_public, priest_profiles.display_order')
+        $this->db->select('users.*, priest_profiles.title, priest_profiles.position, priest_profiles.bio, priest_profiles.is_public, priest_profiles.display_order')
             ->from('users')
             ->join('priest_profiles', 'priest_profiles.user_id = users.id', 'left')
-            ->where('role_id', ROLE_PRIEST)
-            ->where('status', 'active')
+            ->where('users.role_id', ROLE_PRIEST)
+            ->where('users.status', 'active')
+            ->group_start()
+                ->where('priest_profiles.is_public', 1)
+                ->or_where('priest_profiles.is_public IS NULL', null, false)
+            ->group_end()
             ->order_by('priest_profiles.display_order', 'asc')
+            ->order_by('users.last_name', 'asc');
+
+        if ($limit !== null) {
+            $this->db->limit((int) $limit);
+        }
+
+        return $this->db->get()->result_array();
+    }
+
+    public function get_with_priest_profile($id)
+    {
+        return $this->db->select('users.*, priest_profiles.title AS priest_title, priest_profiles.position AS priest_position, priest_profiles.bio AS priest_bio, priest_profiles.is_public AS priest_is_public, priest_profiles.display_order AS priest_display_order')
+            ->from('users')
+            ->join('priest_profiles', 'priest_profiles.user_id = users.id', 'left')
+            ->where('users.id', $id)
             ->get()
-            ->result_array();
+            ->row_array();
     }
 
     /**

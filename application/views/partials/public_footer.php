@@ -3,7 +3,9 @@
     <div class="grid sm:grid-cols-2 lg:grid-cols-[1.2fr_.8fr_.8fr_1fr] gap-10 lg:gap-12">
       <div>
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-12 h-12 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center font-bold">SM</div>
+          <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 overflow-hidden shadow-sm">
+            <img src="<?= base_url('favicon.svg') ?>" alt="Sta. Monica Parish Church logo" class="w-full h-full object-cover">
+          </div>
           <div>
             <div class="font-bold text-lg">Sta. Monica Parish Church</div>
             <div class="text-[10px] text-gold-300 tracking-[.18em] uppercase">Alburquerque · Bohol</div>
@@ -23,6 +25,7 @@
           <li><a href="<?= site_url('mass-schedule') ?>" class="hover:text-gold-200 transition">Mass Schedule</a></li>
           <li><a href="<?= site_url('announcements') ?>" class="hover:text-gold-200 transition">Announcements</a></li>
           <li><a href="<?= site_url('events') ?>" class="hover:text-gold-200 transition">Parish Events</a></li>
+          <li><a href="<?= site_url('priests') ?>" class="hover:text-gold-200 transition">Our Priests</a></li>
           <li><a href="<?= site_url('contact') ?>" class="hover:text-gold-200 transition">Plan Your Visit</a></li>
         </ul>
       </div>

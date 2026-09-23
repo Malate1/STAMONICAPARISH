@@ -16,6 +16,7 @@ class Home extends Public_Controller
         $data['announcements']   = $this->Announcement_model->published(4);
         $data['events']          = $this->Event_model->upcoming(4);
         $data['service_types']   = $this->ServiceType_model->all_active();
+        $data['priests']         = $this->User_model->priests(3);
         $this->render_public('public/home', $data);
     }
 

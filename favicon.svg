@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Sta. Monica Parish Church</title>
+  <rect width="64" height="64" rx="16" fill="#173B29"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#C8901D" stroke-width="2"/>
+  <path fill="#FFFFFF" d="M30 10h4v7h6v4h-6v6h-4v-6h-6v-4h6v-7z"/>
+  <path fill="#FFFFFF" d="M15 34 32 21l17 13v18H38V40H26v12H15V34zm5 0v13h3V37h18v10h3V34L32 25l-12 9z"/>
+  <rect x="30" y="42" width="4" height="10" rx="1" fill="#C8901D"/>
+</svg>

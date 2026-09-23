@@ -50,6 +50,46 @@
           </select>
         </div>
       </div>
+      <div id="priest-fields" class="hidden space-y-4 rounded-2xl border border-parish-100 bg-parish-50/50 p-4">
+        <div class="flex items-center gap-2 text-sm font-semibold text-parish-800">
+          <i class="ph ph-church"></i> Public Priest Profile
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-medium text-gray-500">Clergy Title</label>
+            <input name="priest_title" id="f-priest-title" value="Rev. Fr." placeholder="Rev. Fr." class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500">Position</label>
+            <select name="position" id="f-position" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white">
+              <option value="Parish Priest">Parish Priest</option>
+              <option value="Parochial Vicar">Parochial Vicar</option>
+              <option value="Assistant Priest">Assistant Priest</option>
+              <option value="Resident Priest">Resident Priest</option>
+              <option value="Visiting Priest">Visiting Priest</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500">Short Biography</label>
+          <textarea name="priest_bio" id="f-priest-bio" rows="4" placeholder="Brief pastoral role, ministry background, or message to parishioners..." class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white"></textarea>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500">Photo URL or Site Path <span class="font-normal text-gray-400">(optional)</span></label>
+          <input name="avatar" id="f-avatar" placeholder="https://... or uploads/priests/fr-name.jpg" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white">
+          <p class="text-[11px] text-gray-400 mt-1">If empty, the public site shows a styled priest/church placeholder.</p>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4 items-end">
+          <div>
+            <label class="text-xs font-medium text-gray-500">Display Order</label>
+            <input type="number" min="0" name="priest_display_order" id="f-priest-order" value="0" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm bg-white">
+          </div>
+          <label class="flex items-center gap-2 text-sm text-gray-600 pb-2">
+            <input type="checkbox" name="priest_is_public" id="f-priest-public" value="1" checked class="rounded border-gray-300 text-parish-700">
+            Show on public Priests page
+          </label>
+        </div>
+      </div>
       <div id="password-field">
         <label class="text-xs font-medium text-gray-500">Temporary Password (leave blank to auto-generate)</label>
         <input type="text" name="password" id="f-password" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm">
@@ -66,13 +106,34 @@
 var table;
 function openModal(){ $('#user-modal').removeClass('hidden').addClass('flex'); }
 function closeModal(){ $('#user-modal').addClass('hidden').removeClass('flex'); }
-function resetForm(){ $('#user-form')[0].reset(); $('#f-id').val(''); $('#user-modal-title').text('Add Account'); $('#password-field').show(); }
+function togglePriestFields(){
+  var isPriest = parseInt($('#f-role').val(), 10) === <?= ROLE_PRIEST ?>;
+  $('#priest-fields').toggleClass('hidden', !isPriest);
+}
+function resetForm(){
+  $('#user-form')[0].reset();
+  $('#f-id').val('');
+  $('#f-priest-title').val('Rev. Fr.');
+  $('#f-position').val('Assistant Priest');
+  $('#f-priest-order').val(0);
+  $('#f-priest-public').prop('checked', true);
+  $('#user-modal-title').text('Add Account');
+  $('#password-field').show();
+  togglePriestFields();
+}
 function editUser(id){
   $.get('<?= site_url('admin/users/get/') ?>' + id, function(res){
     var d = res.data;
     resetForm();
     $('#f-id').val(d.id); $('#f-first').val(d.first_name); $('#f-last').val(d.last_name);
     $('#f-email').val(d.email); $('#f-mobile').val(d.mobile_number); $('#f-role').val(d.role_id);
+    $('#f-priest-title').val(d.priest_title || 'Rev. Fr.');
+    $('#f-position').val(d.priest_position || 'Assistant Priest');
+    $('#f-priest-bio').val(d.priest_bio || '');
+    $('#f-avatar').val(d.avatar || '');
+    $('#f-priest-order').val(d.priest_display_order || 0);
+    $('#f-priest-public').prop('checked', d.priest_is_public === null || parseInt(d.priest_is_public, 10) === 1);
+    togglePriestFields();
     $('#password-field').hide();
     $('#user-modal-title').text('Edit Account');
     openModal();
@@ -93,6 +154,8 @@ $('#user-form').on('submit', function(e){
   });
 });
 $(function(){
+  $('#f-role').on('change', togglePriestFields);
+  togglePriestFields();
   document.getElementById('user-modal').querySelector('.relative').addEventListener('click', function(e){ e.stopPropagation(); });
   table = $('#user-table').DataTable({
     processing: true, serverSide: true,

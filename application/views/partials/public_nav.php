@@ -20,7 +20,9 @@ $is_active = static function ($route) use ($current_path) {
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center h-[72px]">
       <a href="<?= site_url('/') ?>" class="flex items-center gap-3 min-w-0">
-        <div class="w-11 h-11 rounded-full bg-parish-800 text-white flex items-center justify-center font-bold text-sm ring-4 ring-parish-50 flex-shrink-0">SM</div>
+        <div class="w-11 h-11 rounded-2xl bg-parish-800 ring-4 ring-parish-50 flex-shrink-0 overflow-hidden shadow-sm">
+          <img src="<?= base_url('favicon.svg') ?>" alt="Sta. Monica Parish Church logo" class="w-full h-full object-cover">
+        </div>
         <div class="leading-tight min-w-0">
           <div class="font-bold text-parish-900 text-[15px] truncate">Sta. Monica Parish Church</div>
           <div class="text-[10px] text-gold-600 tracking-[.16em] uppercase mt-0.5">Alburquerque · Bohol</div>
@@ -35,6 +37,7 @@ $is_active = static function ($route) use ($current_path) {
             'announcements' => 'Announcements',
             'events' => 'Events',
             'ministries' => 'Ministries',
+            'priests' => 'Our Priests',
             'about' => 'Heritage',
             'contact' => 'Visit & Contact',
           ];

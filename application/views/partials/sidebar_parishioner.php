@@ -1,6 +1,8 @@
 <aside class="w-64 bg-parish-900 text-parish-100 flex-shrink-0 hidden lg:flex flex-col">
   <div class="h-16 flex items-center gap-2.5 px-5 border-b border-white/10">
-    <div class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center font-semibold text-sm">SM</div>
+    <div class="w-9 h-9 rounded-xl bg-white/10 overflow-hidden flex-shrink-0">
+      <img src="<?= base_url('favicon.svg') ?>" alt="Sta. Monica Parish Church logo" class="w-full h-full object-cover">
+    </div>
     <div class="leading-tight">
       <div class="font-semibold text-white text-sm">Sta. Monica Parish</div>
       <div class="text-[11px] text-gold-400 -mt-0.5">CONNECT</div>

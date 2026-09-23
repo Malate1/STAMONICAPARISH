@@ -42,7 +42,12 @@ class Users extends Role_Controller
 
     public function get($id)
     {
-        $this->json(['success' => true, 'data' => $this->User_model->get($id)]);
+        $user = $this->User_model->get_with_priest_profile($id);
+        if (!$user) {
+            return $this->json(['success' => false, 'message' => 'Account not found.'], 404);
+        }
+
+        $this->json(['success' => true, 'data' => $user]);
     }
 
     public function store()
@@ -69,18 +74,50 @@ class Users extends Role_Controller
             'role_id'       => $this->input->post('role_id'),
         ];
 
+        if ((int) $payload['role_id'] === ROLE_PRIEST) {
+            $payload['avatar'] = trim((string) $this->input->post('avatar', true)) ?: null;
+        }
+
+        $profile_payload = [
+            'title'         => trim((string) $this->input->post('priest_title', true)) ?: 'Rev. Fr.',
+            'position'      => trim((string) $this->input->post('position', true)) ?: 'Assistant Priest',
+            'bio'           => trim((string) $this->input->post('priest_bio', true)) ?: null,
+            'is_public'     => $this->input->post('priest_is_public') ? 1 : 0,
+            'display_order' => (int) $this->input->post('priest_display_order'),
+        ];
+
         if ($id) {
+            $this->db->trans_start();
             $this->User_model->update($id, $payload);
+
+            if ((int) $payload['role_id'] === ROLE_PRIEST) {
+                $existing_profile = $this->db->get_where('priest_profiles', ['user_id' => $id])->row_array();
+                if ($existing_profile) {
+                    $this->db->where('user_id', $id)->update('priest_profiles', $profile_payload);
+                } else {
+                    $profile_payload['user_id'] = $id;
+                    $this->db->insert('priest_profiles', $profile_payload);
+                }
+            } else {
+                $this->db->where('user_id', $id)->delete('priest_profiles');
+            }
+
+            $this->db->trans_complete();
             $msg = 'Account updated.';
         } else {
             $password = $this->input->post('password') ?: bin2hex(random_bytes(4));
             $payload['password_hash'] = password_hash($password, PASSWORD_BCRYPT);
             $payload['status'] = 'active';
+
+            $this->db->trans_start();
             $new_id = $this->User_model->create($payload);
 
-            if ($payload['role_id'] == ROLE_PRIEST) {
-                $this->db->insert('priest_profiles', ['user_id' => $new_id, 'position' => $this->input->post('position', true) ?: 'Assistant Priest']);
+            if ((int) $payload['role_id'] === ROLE_PRIEST) {
+                $profile_payload['user_id'] = $new_id;
+                $this->db->insert('priest_profiles', $profile_payload);
             }
+            $this->db->trans_complete();
+
             $msg = 'Account created. Temporary password: ' . $password;
         }
 

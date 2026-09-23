@@ -126,6 +126,67 @@ $convent_img = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Santa_Monica
   </div>
 </section>
 
+<!-- Parish priests -->
+<section class="bg-parish-50/70 border-y border-parish-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5 mb-9">
+      <div>
+        <div class="heritage-kicker text-gold-600">Parish leadership</div>
+        <h2 class="text-3xl sm:text-4xl font-bold text-parish-900 mt-2">Meet our parish priests.</h2>
+        <p class="text-gray-600 mt-2 max-w-2xl">
+          Get to know the clergy serving Sta. Monica Parish through worship, sacramental ministry, pastoral care and community leadership.
+        </p>
+      </div>
+      <a href="<?= site_url('priests') ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-parish-700 hover:text-parish-900">
+        View all priests <i class="ph ph-arrow-right"></i>
+      </a>
+    </div>
+
+    <?php if (!empty($priests)): ?>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <?php foreach ($priests as $priest): ?>
+          <?php
+            $photo = !empty($priest['avatar'])
+              ? (preg_match('/^https?:\/\//i', $priest['avatar']) ? $priest['avatar'] : base_url(ltrim($priest['avatar'], '/')))
+              : null;
+            $full_name = trim(($priest['title'] ?: 'Rev. Fr.') . ' ' . $priest['first_name'] . ' ' . $priest['last_name']);
+          ?>
+          <a href="<?= site_url('priests') ?>" class="group flex items-center gap-4 rounded-3xl bg-white border border-stonewarm-200 p-5 hover:border-parish-200 hover:shadow-soft transition">
+            <div class="w-20 h-20 rounded-2xl overflow-hidden bg-parish-800 text-white flex items-center justify-center flex-shrink-0">
+              <?php if ($photo): ?>
+                <img src="<?= html_escape($photo) ?>" alt="<?= html_escape($full_name) ?>" class="w-full h-full object-cover">
+              <?php else: ?>
+                <i class="ph ph-church text-3xl"></i>
+              <?php endif; ?>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-gold-600"><?= html_escape($priest['position'] ?: 'Priest') ?></div>
+              <h3 class="font-bold text-parish-900 mt-1 group-hover:text-parish-700 transition"><?= html_escape($full_name) ?></h3>
+              <?php if (!empty($priest['bio'])): ?>
+                <p class="text-xs text-gray-500 mt-1 line-clamp-2"><?= html_escape($priest['bio']) ?></p>
+              <?php else: ?>
+                <p class="text-xs text-gray-500 mt-1">Serving the Sta. Monica Parish community.</p>
+              <?php endif; ?>
+            </div>
+            <i class="ph ph-arrow-up-right text-gray-300 group-hover:text-parish-700 ml-auto"></i>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <a href="<?= site_url('priests') ?>" class="flex items-center justify-between gap-4 rounded-3xl bg-white border border-stonewarm-200 p-6 hover:border-parish-200 transition">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-parish-50 text-parish-700 flex items-center justify-center text-2xl"><i class="ph ph-church"></i></div>
+          <div>
+            <div class="font-bold text-parish-900">Parish priest profiles</div>
+            <div class="text-sm text-gray-500 mt-1">Clergy information will appear here once published by the parish office.</div>
+          </div>
+        </div>
+        <i class="ph ph-arrow-right text-parish-700"></i>
+      </a>
+    <?php endif; ?>
+  </div>
+</section>
+
 <!-- Quick parish services -->
 <section class="bg-white border-y border-stonewarm-200">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
