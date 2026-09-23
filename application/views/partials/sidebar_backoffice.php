@@ -30,6 +30,9 @@ if (!function_exists('nav_item')) {
       <?= nav_item(site_url($base . '/certificate'), 'ph-scroll', 'Certificates', $seg2 === 'certificate') ?>
       <?= nav_item(site_url($base . '/payment'), 'ph-credit-card', 'Payments', $seg2 === 'payment') ?>
       <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', $seg2 === 'record') ?>
+      <?php if ($role === ROLE_SECRETARY): ?>
+        <?= nav_item(site_url('staff/service-config'), 'ph-calendar-gear', 'Service Availability', $seg2 === 'service-config') ?>
+      <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($role === ROLE_SECRETARY): ?>
@@ -76,6 +79,9 @@ if (!function_exists('nav_item')) {
         <?= nav_item(site_url($base . '/certificate'), 'ph-scroll', 'Certificates', false) ?>
         <?= nav_item(site_url($base . '/payment'), 'ph-credit-card', 'Payments', false) ?>
         <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', false) ?>
+        <?php if ($role === ROLE_SECRETARY): ?>
+          <?= nav_item(site_url('staff/service-config'), 'ph-calendar-gear', 'Service Availability', false) ?>
+        <?php endif; ?>
       <?php endif; ?>
       <?php if ($role === ROLE_PRIEST): ?>
         <?= nav_item(site_url('priest/schedule'), 'ph-calendar-blank', 'My Schedule', false) ?>

@@ -107,12 +107,40 @@ CREATE TABLE service_types (
     description TEXT DEFAULT NULL,
     base_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
     duration_minutes INT UNSIGNED NOT NULL DEFAULT 60,
+    uses_main_church BOOLEAN NOT NULL DEFAULT 1,
+    allow_special_booking BOOLEAN NOT NULL DEFAULT 0,
+    special_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+    special_start_time TIME DEFAULT NULL,
+    special_end_time TIME DEFAULT NULL,
+    slot_interval_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 60,
+    booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    min_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    max_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 365,
     requires_schedule BOOLEAN NOT NULL DEFAULT 1,
     requires_approval_workflow BOOLEAN NOT NULL DEFAULT 0, -- e.g. wedding: interview -> priest review -> confirm
     icon VARCHAR(50) DEFAULT NULL,
     is_active BOOLEAN NOT NULL DEFAULT 1,
     display_order INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE service_schedule_rules (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_type_id INT UNSIGNED NOT NULL,
+    rule_name VARCHAR(150) NOT NULL,
+    day_of_week TINYINT UNSIGNED NOT NULL, -- 0=Sunday ... 6=Saturday
+    week_numbers VARCHAR(20) NOT NULL DEFAULT '1,2,3,4,5',
+    start_time TIME DEFAULT NULL,
+    fee_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    capacity SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    valid_from DATE DEFAULT NULL,
+    valid_until DATE DEFAULT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT 1,
+    display_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_type_id) REFERENCES service_types(id) ON DELETE CASCADE,
+    INDEX idx_service_rule_active (service_type_id, is_active)
 ) ENGINE=InnoDB;
 
 CREATE TABLE service_requirements (
@@ -133,6 +161,8 @@ CREATE TABLE service_bookings (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     booking_code VARCHAR(30) NOT NULL UNIQUE, -- e.g. SMC-BAP-2026-00042
     service_type_id INT UNSIGNED NOT NULL,
+    booking_type ENUM('regular','special') NOT NULL DEFAULT 'special',
+    schedule_rule_id INT UNSIGNED DEFAULT NULL,
     user_id INT UNSIGNED NOT NULL,           -- applicant/parishioner
     assigned_priest_id INT UNSIGNED DEFAULT NULL,
     preferred_date DATE DEFAULT NULL,
@@ -152,11 +182,13 @@ CREATE TABLE service_bookings (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (service_type_id) REFERENCES service_types(id),
+    FOREIGN KEY (schedule_rule_id) REFERENCES service_schedule_rules(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_priest_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_status (status),
-    INDEX idx_preferred_date (preferred_date)
+    INDEX idx_preferred_date (preferred_date),
+    INDEX idx_booking_schedule (confirmed_date, status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE booking_documents (
@@ -486,6 +518,17 @@ INSERT INTO service_types (service_key, name, category, description, base_fee, r
 ('house_blessing', 'House Blessing', 'blessing', 'Blessing of homes.', 300.00, 1, 0, 'home', 5),
 ('vehicle_blessing', 'Vehicle Blessing', 'blessing', 'Blessing of vehicles.', 300.00, 1, 0, 'car', 6),
 ('counseling', 'Pastoral Counseling', 'service', 'Appointment for pastoral counseling.', 0.00, 1, 0, 'chat', 7);
+
+-- Availability defaults. Staff may change these in Service Configuration.
+UPDATE service_types SET allow_special_booking = 1, special_fee = 9000.00, uses_main_church = 1 WHERE service_key = 'wedding';
+UPDATE service_types SET allow_special_booking = 1, special_fee = base_fee, uses_main_church = 1 WHERE service_key = 'baptism';
+UPDATE service_types SET uses_main_church = 0 WHERE service_key IN ('house_blessing','vehicle_blessing','counseling');
+
+INSERT INTO service_schedule_rules (service_type_id, rule_name, day_of_week, week_numbers, start_time, fee_amount, capacity, is_active, display_order)
+SELECT id, 'Free Wedding - 2nd & 4th Thursday', 4, '2,4', '06:00:00', 0.00, 1, 1, 10 FROM service_types WHERE service_key = 'wedding';
+
+INSERT INTO service_schedule_rules (service_type_id, rule_name, day_of_week, week_numbers, start_time, fee_amount, capacity, is_active, display_order)
+SELECT id, 'Free Baptism - 2nd & 4th Saturday', 6, '2,4', NULL, 0.00, 1, 1, 10 FROM service_types WHERE service_key = 'baptism';
 
 INSERT INTO service_requirements (service_type_id, label, is_required, display_order) VALUES
 (1, 'Child''s Birth Certificate (PSA)', 1, 1),

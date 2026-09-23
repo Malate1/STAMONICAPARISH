@@ -29,7 +29,7 @@
 <div class="bg-white rounded-2xl border border-gray-100 p-6">
   <div class="overflow-x-auto">
     <table id="booking-table" class="w-full text-sm">
-      <thead><tr><th>Code</th><th>Service</th><th>Applicant</th><th>Preferred Date</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+      <thead><tr><th>Code</th><th>Service</th><th>Applicant</th><th>Reserved Schedule</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
   </div>

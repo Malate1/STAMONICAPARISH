@@ -28,7 +28,8 @@ class Booking extends Role_Controller
                 'booking_code' => '<a href="' . site_url('staff/booking/view/' . $r['id']) . '" class="font-medium text-emerald-700 hover:underline">' . $r['booking_code'] . '</a>',
                 'service_name' => $r['service_name'],
                 'applicant'    => $r['first_name'] . ' ' . $r['last_name'] . '<div class="text-xs text-gray-400">' . $r['email'] . '</div>',
-                'preferred_date' => format_date($r['preferred_date']),
+                'preferred_date' => ($r['confirmed_date'] ? format_datetime($r['confirmed_date']) : format_date($r['preferred_date']))
+                    . '<div class="text-[11px] mt-0.5 ' . (($r['booking_type'] ?? 'special') === 'regular' ? 'text-emerald-600' : 'text-amber-600') . '">' . (($r['booking_type'] ?? 'special') === 'regular' ? 'Regular / Parish Schedule' : 'Special Booking') . '</div>',
                 'status'       => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
                 'created_at'   => format_date($r['created_at']),
                 'actions'      => '<a href="' . site_url('staff/booking/view/' . $r['id']) . '" class="text-emerald-700 hover:underline font-medium">Review</a>',
@@ -85,14 +86,36 @@ class Booking extends Role_Controller
         $booking = $this->Booking_model->get($id);
         if (!$booking) return $this->json(['success' => false, 'message' => 'Not found.']);
 
-        if ($priest_id && $confirmed_date) {
-            $conflict = $this->db->where('assigned_priest_id', $priest_id)
-                ->where('confirmed_date', $confirmed_date)
-                ->where('id !=', $id)
-                ->where_in('status', ['approved', 'scheduled'])
-                ->count_all_results('service_bookings');
-            if ($conflict > 0) {
-                return $this->json(['success' => false, 'message' => 'This priest already has an assignment at that exact date/time.']);
+        if ($confirmed_date) {
+            $current_normalized = $booking['confirmed_date'] ? date('Y-m-d H:i:s', strtotime($booking['confirmed_date'])) : null;
+            $new_normalized = date('Y-m-d H:i:s', strtotime($confirmed_date));
+
+            if ($new_normalized !== $current_normalized) {
+                $slot = $this->Booking_model->resolve_slot(
+                    $booking['service_type_id'],
+                    $booking['booking_type'] ?? 'special',
+                    $new_normalized,
+                    $booking['schedule_rule_id'] ?? null,
+                    $id
+                );
+                if (empty($slot['valid'])) {
+                    return $this->json(['success' => false, 'message' => $slot['message'] ?? 'That schedule is not available.']);
+                }
+            }
+
+            if ($priest_id) {
+                $priest_conflict = $this->Booking_model->priest_has_conflict(
+                    $priest_id,
+                    $new_normalized,
+                    $booking['service_type_id'],
+                    $id
+                );
+                if ($priest_conflict) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'This priest already has ' . $priest_conflict['service_name'] . ' during that time. Please choose another priest or schedule.'
+                    ]);
+                }
             }
         }
 

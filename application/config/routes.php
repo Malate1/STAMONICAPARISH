@@ -87,6 +87,7 @@ $route['my/dashboard']               = 'parishioner/dashboard';
 $route['my/bookings']                = 'parishioner/booking';
 $route['my/bookings/datatable']      = 'parishioner/booking/datatable';
 $route['my/bookings/store']          = 'parishioner/booking/store';
+$route['my/bookings/availability']   = 'parishioner/booking/availability';
 $route['my/bookings/new/(:any)']     = 'parishioner/booking/create/$1';
 $route['my/bookings/cancel/(:num)']  = 'parishioner/booking/cancel/$1';
 $route['my/bookings/(:num)']         = 'parishioner/booking/view/$1';
@@ -108,6 +109,13 @@ $route['admin']                      = 'admin/dashboard';
 $route['admin/(:any)']               = 'admin/$1';
 
 // ---- Secretary area ----
+$route['staff/service-config']                         = 'admin/service_type';
+$route['staff/service-config/get/(:num)']             = 'admin/service_type/get/$1';
+$route['staff/service-config/store']                   = 'admin/service_type/store';
+$route['staff/service-config/add-requirement']         = 'admin/service_type/add_requirement';
+$route['staff/service-config/delete-requirement/(:num)'] = 'admin/service_type/delete_requirement/$1';
+$route['staff/service-config/save-schedule-rule']      = 'admin/service_type/save_schedule_rule';
+$route['staff/service-config/delete-schedule-rule/(:num)'] = 'admin/service_type/delete_schedule_rule/$1';
 $route['staff']                      = 'staff/dashboard';
 $route['staff/(:any)']               = 'staff/$1';
 

@@ -31,7 +31,8 @@ class Booking extends Role_Controller
             $data[] = [
                 'booking_code' => $r['booking_code'],
                 'service_name' => $r['service_name'],
-                'preferred_date' => format_date($r['preferred_date']),
+                'preferred_date' => ($r['confirmed_date'] ? format_datetime($r['confirmed_date']) : format_date($r['preferred_date']))
+                    . '<div class="text-[11px] mt-0.5 ' . (($r['booking_type'] ?? 'special') === 'regular' ? 'text-emerald-600' : 'text-amber-600') . '">' . (($r['booking_type'] ?? 'special') === 'regular' ? 'Regular / Parish Schedule' : 'Special Booking') . '</div>',
                 'status' => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
                 'created_at' => format_date($r['created_at']),
                 'actions' => '<a href="' . site_url('my/bookings/' . $r['id']) . '" class="text-emerald-700 hover:underline font-medium">View</a>',
@@ -52,9 +53,55 @@ class Booking extends Role_Controller
         $service = $this->ServiceType_model->find_by_key($service_key);
         if (!$service) show_404();
 
-        $data['service']      = $service;
-        $data['requirements'] = $this->ServiceType_model->requirements($service['id']);
+        $data['service']        = $service;
+        $data['requirements']   = $this->ServiceType_model->requirements($service['id']);
+        $data['schedule_rules'] = $this->ServiceType_model->schedule_rules($service['id'], true);
         $this->render_app('parishioner/booking_form', $data, 'layouts/app_parishioner');
+    }
+
+    /** AJAX: availability-based schedule lookup. */
+    public function availability()
+    {
+        $service_id = (int) $this->input->post('service_type_id');
+        $booking_type = $this->input->post('booking_type', true);
+        $service = $this->ServiceType_model->get($service_id);
+        if (!$service || empty($service['is_active'])) {
+            return $this->json(['success' => false, 'message' => 'Service is not available.']);
+        }
+
+        if ($booking_type === 'regular') {
+            $slots = $this->Booking_model->upcoming_regular_slots($service_id, 10);
+            return $this->json([
+                'success' => true,
+                'slots' => $slots,
+                'message' => empty($slots)
+                    ? 'No regular slots are currently available. The parish may still be configuring the schedule, or the published slots are already full.'
+                    : '',
+            ]);
+        }
+
+        if ($booking_type === 'special') {
+            $date = $this->input->post('date', true);
+
+            // Without a date, return only dates that currently have at least
+            // one available time slot. This makes the UI availability-first
+            // instead of presenting an unrestricted date picker.
+            if (!$date) {
+                $dates = $this->Booking_model->upcoming_special_dates($service_id, 12);
+                return $this->json([
+                    'success' => true,
+                    'dates' => $dates,
+                    'message' => empty($dates)
+                        ? 'No special-booking dates are currently available within the parish booking window.'
+                        : '',
+                ]);
+            }
+
+            $result = $this->Booking_model->special_slots_for_date($service_id, $date);
+            return $this->json($result);
+        }
+
+        $this->json(['success' => false, 'message' => 'Please choose Regular / Free or Special booking.']);
     }
 
     /** POST /my/bookings/store - submit new application (AJAX) */
@@ -66,31 +113,72 @@ class Booking extends Role_Controller
             return $this->json(['success' => false, 'message' => 'Invalid service selected.']);
         }
 
-        $this->form_validation->set_rules('preferred_date', 'Preferred Date', 'required');
+        $this->form_validation->set_rules('booking_type', 'Booking Type', 'required|in_list[regular,special]');
+        $this->form_validation->set_rules('schedule_start', 'Available Schedule', 'required');
 
         if ($this->form_validation->run() === FALSE) {
             return $this->json(['success' => false, 'message' => strip_tags(validation_errors())]);
         }
 
-        // Collect all non-system POST fields into a flexible "details" JSON blob
-        $skip = ['service_type_id', 'preferred_date', 'alternative_date', '<csrf>'];
+        $booking_type = $this->input->post('booking_type', true);
+        $schedule_start = $this->input->post('schedule_start', true);
+        $schedule_rule_id = $this->input->post('schedule_rule_id') ?: null;
+
+        // Never trust a date/time or fee coming from the browser. Re-resolve the
+        // selected slot from current parish rules and current bookings.
+        $slot = $this->Booking_model->resolve_slot(
+            $service_id,
+            $booking_type,
+            $schedule_start,
+            $schedule_rule_id
+        );
+        if (empty($slot['valid'])) {
+            return $this->json(['success' => false, 'message' => $slot['message'] ?? 'That schedule is no longer available.']);
+        }
+
+        // Collect all non-system POST fields into a flexible details JSON blob.
+        $skip = ['service_type_id', 'booking_type', 'schedule_start', 'schedule_rule_id', 'preferred_date', 'alternative_date', '<csrf>'];
         $details = [];
         foreach ($this->input->post() as $k => $v) {
             if (!in_array($k, $skip, true) && strpos($k, $this->security->get_csrf_token_name()) === FALSE) {
                 $details[$k] = is_array($v) ? $v : trim((string) $v);
             }
         }
+        $details['schedule_label'] = $slot['rule_name'];
+
+        $this->db->trans_start();
+
+        // Recheck inside the transaction to reduce the chance of two people
+        // claiming the same church slot at nearly the same moment.
+        $slot = $this->Booking_model->resolve_slot(
+            $service_id,
+            $booking_type,
+            $schedule_start,
+            $schedule_rule_id
+        );
+        if (empty($slot['valid'])) {
+            $this->db->trans_complete();
+            return $this->json(['success' => false, 'message' => $slot['message'] ?? 'That schedule was just taken. Please choose another slot.']);
+        }
 
         $booking_id = $this->Booking_model->create([
             'booking_code'      => $this->Booking_model->generate_code($service['service_key']),
             'service_type_id'   => $service_id,
+            'booking_type'      => $slot['booking_type'],
+            'schedule_rule_id'  => $slot['schedule_rule_id'],
             'user_id'           => $this->current_user['id'],
-            'preferred_date'    => $this->input->post('preferred_date'),
-            'alternative_date'  => $this->input->post('alternative_date') ?: null,
+            'preferred_date'    => $slot['date'],
+            'alternative_date'  => null,
+            'confirmed_date'    => $slot['datetime'],
             'status'            => $service['requires_approval_workflow'] ? 'under_review' : 'submitted',
-            'fee_amount'        => $service['base_fee'],
+            'fee_amount'        => $slot['fee'],
             'details'           => json_encode($details),
         ]);
+
+        $this->db->trans_complete();
+        if ($this->db->trans_status() === FALSE) {
+            return $this->json(['success' => false, 'message' => 'The booking could not be saved. Please try again.']);
+        }
 
         // Handle multi-file requirement uploads
         if (!empty($_FILES['documents']['name'][0])) {

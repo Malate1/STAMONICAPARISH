@@ -6,7 +6,11 @@
       <div>
         <div class="text-xs text-gray-400"><?= html_escape($booking['booking_code']) ?></div>
         <h1 class="text-xl font-semibold text-gray-900 mt-1"><?= html_escape($booking['service_name']) ?></h1>
-        <div class="text-sm text-gray-500 mt-1">Preferred: <?= format_date($booking['preferred_date']) ?><?= $booking['confirmed_date'] ? ' · Confirmed: ' . format_datetime($booking['confirmed_date']) : '' ?></div>
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+          <span class="px-2.5 py-1 rounded-full <?= ($booking['booking_type'] ?? 'special') === 'regular' ? 'bg-emerald-50 text-emerald-700' : 'bg-gold-50 text-gold-700' ?> font-medium"><?= ucfirst($booking['booking_type'] ?? 'special') ?> Booking</span>
+          <?php if ($booking['confirmed_date']): ?><span class="px-2.5 py-1 rounded-full bg-parish-50 text-parish-700 font-medium"><i class="ph ph-calendar-check mr-1"></i><?= format_datetime($booking['confirmed_date']) ?></span><?php endif; ?>
+          <span class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 font-medium">Fee: <?= (float) $booking['fee_amount'] === 0.0 ? 'FREE' : peso($booking['fee_amount']) ?></span>
+        </div>
       </div>
       <span class="px-3 py-1.5 rounded-full text-xs font-medium <?= status_badge_class($booking['status']) ?>"><?= status_label($booking['status']) ?></span>
     </div>
@@ -17,7 +21,7 @@
     </div>
     <?php endif; ?>
 
-    <?php if ($booking['status'] === 'awaiting_payment'): ?>
+    <?php if ($booking['status'] === 'awaiting_payment' && (float) $booking['fee_amount'] > 0): ?>
     <div class="mt-5 p-4 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-between">
       <div class="text-sm text-orange-800"><strong>Payment required:</strong> <?= peso($booking['fee_amount']) ?></div>
       <a href="<?= site_url('my/payments/pay/service_booking/' . $booking['id']) ?>" class="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium">Pay via GCash</a>

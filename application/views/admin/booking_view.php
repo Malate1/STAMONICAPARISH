@@ -9,6 +9,11 @@
           <div class="text-xs text-gray-400"><?= html_escape($booking['booking_code']) ?></div>
           <h1 class="text-xl font-semibold text-gray-900 mt-1"><?= html_escape($booking['service_name']) ?></h1>
           <div class="text-sm text-gray-500 mt-1"><?= html_escape($booking['first_name'] . ' ' . $booking['last_name']) ?> · <?= html_escape($booking['email']) ?> · <?= html_escape($booking['mobile_number']) ?></div>
+          <div class="mt-3 flex flex-wrap gap-2 text-xs">
+            <span class="px-2.5 py-1 rounded-full <?= ($booking['booking_type'] ?? 'special') === 'regular' ? 'bg-emerald-50 text-emerald-700' : 'bg-gold-50 text-gold-700' ?> font-medium"><?= ucfirst($booking['booking_type'] ?? 'special') ?> Booking</span>
+            <?php if ($booking['confirmed_date']): ?><span class="px-2.5 py-1 rounded-full bg-parish-50 text-parish-700 font-medium"><i class="ph ph-calendar-check mr-1"></i><?= format_datetime($booking['confirmed_date']) ?></span><?php endif; ?>
+            <span class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 font-medium">Fee: <?= (float) $booking['fee_amount'] === 0.0 ? 'FREE' : peso($booking['fee_amount']) ?></span>
+          </div>
         </div>
         <span class="px-3 py-1.5 rounded-full text-xs font-medium <?= status_badge_class($booking['status']) ?>"><?= status_label($booking['status']) ?></span>
       </div>
@@ -72,7 +77,9 @@
         <button onclick="changeStatus('interview_processing')" class="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100">Interview / Canonical Processing</button>
         <button onclick="changeStatus('priest_review')" class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100">Send for Priest Review</button>
         <?php endif; ?>
+        <?php if ((float) $booking['fee_amount'] > 0): ?>
         <button onclick="changeStatus('awaiting_payment')" class="px-3 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium hover:bg-orange-100">Move to Awaiting Payment</button>
+        <?php endif; ?>
         <button onclick="changeStatus('completed')" class="px-3 py-2 rounded-lg bg-green-50 text-green-700 text-sm font-medium hover:bg-green-100">Mark Completed</button>
         <button onclick="changeStatus('cancelled')" class="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200">Cancel Application</button>
       </div>
@@ -87,7 +94,11 @@
             <option value="<?= $p['id'] ?>" <?= $booking['assigned_priest_id'] == $p['id'] ? 'selected' : '' ?>><?= html_escape($p['first_name'] . ' ' . $p['last_name']) ?></option>
           <?php endforeach; ?>
         </select>
-        <input type="datetime-local" name="confirmed_date" value="<?= $booking['confirmed_date'] ? date('Y-m-d\TH:i', strtotime($booking['confirmed_date'])) : '' ?>" class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm">
+        <div>
+          <label class="text-[11px] font-medium text-gray-500">Reserved Schedule</label>
+          <input type="datetime-local" name="confirmed_date" value="<?= $booking['confirmed_date'] ? date('Y-m-d\TH:i', strtotime($booking['confirmed_date'])) : '' ?>" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">Changing this time is checked against church availability and the selected booking rule.</p>
+        </div>
         <button type="submit" class="w-full py-2.5 rounded-lg bg-parish-700 hover:bg-parish-800 text-white text-sm font-medium">Save Assignment</button>
       </form>
     </div>
