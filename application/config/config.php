@@ -27,7 +27,7 @@ date_default_timezone_set('Asia/Manila');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://172.16.46.140/stamonica-parish/';  // e.g. 'http://localhost/stamonica-parish/'
+$config['base_url'] = 'https://stamonicaparish.infinityfreeapp.com/';  // e.g. 'http://localhost/stamonica-parish/'
 
 /*
 |--------------------------------------------------------------------------

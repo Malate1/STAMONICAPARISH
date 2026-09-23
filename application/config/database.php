@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'stamonica_parish',
+	'hostname' => 'sql113.infinityfree.com',
+	'username' => 'if0_42986500',
+	'password' => '83rDj8xaOtj62',
+	'database' => 'if0_42986500_stamonica_parish',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
