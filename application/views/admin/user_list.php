@@ -17,7 +17,7 @@
 
 <div id="user-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4">
   <div class="absolute inset-0 bg-black/50" onclick="closeModal()"></div>
-  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
     <h2 class="font-semibold text-gray-800 mb-4" id="user-modal-title">Add Account</h2>
     <form id="user-form" class="space-y-4">
       <input type="hidden" name="id" id="f-id">
