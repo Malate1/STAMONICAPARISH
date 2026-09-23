@@ -53,7 +53,25 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+	// Keep detailed errors on local development only. Public deployments such
+	// as InfinityFree should not expose filesystem paths or PHP deprecations.
+	if (isset($_SERVER['CI_ENV']))
+	{
+		define('ENVIRONMENT', $_SERVER['CI_ENV']);
+	}
+	else
+	{
+		$host = isset($_SERVER['HTTP_HOST']) ? strtolower($_SERVER['HTTP_HOST']) : '';
+		$server_addr = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '';
+		$is_local = ($host === 'localhost'
+			OR strpos($host, 'localhost:') === 0
+			OR $server_addr === '127.0.0.1'
+			OR $server_addr === '::1'
+			OR strpos($server_addr, '192.168.') === 0
+			OR strpos($server_addr, '172.16.') === 0);
+
+		define('ENVIRONMENT', $is_local ? 'development' : 'production');
+	}
 
 /*
  *---------------------------------------------------------------
@@ -73,14 +91,9 @@ switch (ENVIRONMENT)
 	case 'testing':
 	case 'production':
 		ini_set('display_errors', 0);
-		if (version_compare(PHP_VERSION, '5.3', '>='))
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-		}
-		else
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-		}
+		// The project targets modern PHP. Avoid E_STRICT here because the
+		// constant itself is deprecated in PHP 8.4.
+		error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
 	break;
 
 	default:

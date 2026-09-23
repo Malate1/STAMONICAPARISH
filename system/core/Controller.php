@@ -50,6 +50,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/userguide3/general/controllers.html
  */
+// CodeIgniter 3 intentionally exposes loaded libraries as properties on the
+// super-object. PHP 8.2+ deprecates undeclared dynamic properties, so allow
+// this legacy framework behavior explicitly for controllers and subclasses.
+#[\AllowDynamicProperties]
 class CI_Controller {
 
 	/**

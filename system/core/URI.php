@@ -52,6 +52,16 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class CI_URI {
 
 	/**
+	 * CI_Config class object
+	 *
+	 * Explicitly declared for PHP 8.2+ compatibility; older CI3 builds
+	 * assigned this property dynamically in the constructor.
+	 *
+	 * @var	CI_Config
+	 */
+	public $config;
+
+	/**
 	 * List of cached URI segments
 	 *
 	 * @var	array
