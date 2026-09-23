@@ -10,6 +10,25 @@
   </div>
 </div>
 
+<div class="mb-6 grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+  <div class="rounded-2xl border border-parish-100 bg-parish-50/50 p-4">
+    <div class="flex items-center gap-2 text-sm font-semibold text-parish-800"><i class="ph ph-calendar-heart"></i> Regular Schedule</div>
+    <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Recurring parish dates such as 2nd &amp; 4th Thursday. Each rule can have its own time, fee, and capacity.</p>
+  </div>
+  <div class="rounded-2xl border border-gold-100 bg-gold-50/50 p-4">
+    <div class="flex items-center gap-2 text-sm font-semibold text-gold-800"><i class="ph ph-sparkle"></i> Special Booking</div>
+    <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Dates outside the regular schedule. The special fee and allowed hours are configured separately.</p>
+  </div>
+  <div class="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+    <div class="flex items-center gap-2 text-sm font-semibold text-blue-800"><i class="ph ph-clock"></i> Duration + Buffer</div>
+    <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Duration blocks the church while the service happens. Buffer reserves extra time afterward for preparation or clearing.</p>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-4">
+    <div class="flex items-center gap-2 text-sm font-semibold text-gray-800"><i class="ph ph-church"></i> Main Church</div>
+    <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Services marked Main Church cannot overlap another Main Church booking on the same date and time.</p>
+  </div>
+</div>
+
 <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
   <?php foreach ($service_types as $s): ?>
   <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -68,7 +87,12 @@
         <section class="rounded-2xl border border-gray-100 p-5">
           <div class="mb-4">
             <div class="text-xs font-bold uppercase tracking-wide text-parish-700">Basic settings</div>
-            <p class="text-xs text-gray-400 mt-1">Name, fees, duration, and whether this service occupies the Main Church.</p>
+            <p class="text-xs text-gray-400 mt-1">These values control how much calendar time the service uses and how far in advance parishioners may book.</p>
+          </div>
+
+          <div class="mb-5 rounded-xl bg-blue-50 border border-blue-100 p-4 text-xs text-blue-900 leading-relaxed">
+            <div class="font-semibold mb-1"><i class="ph ph-info mr-1"></i> How these fields affect availability</div>
+            <p><strong>Duration</strong> blocks the service itself. <strong>Buffer</strong> adds protected time after it. <strong>Min/Max advance days</strong> control the earliest and latest dates shown to parishioners. Regular schedule fees and Special Booking fees override the Default/Base Fee when those booking types are used.</p>
           </div>
 
           <div class="grid md:grid-cols-2 gap-4">
@@ -77,8 +101,9 @@
               <input required name="name" id="f-name" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Base Fee (₱)</label>
+              <label class="text-xs font-medium text-gray-500">Default / Base Fee (₱)</label>
               <input required type="number" min="0" step="0.01" name="base_fee" id="f-fee" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">General fallback fee. A Regular Schedule rule or Special Booking fee can replace this amount.</p>
             </div>
             <div class="md:col-span-2">
               <label class="text-xs font-medium text-gray-500">Description</label>
@@ -88,20 +113,24 @@
 
           <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <div>
-              <label class="text-xs font-medium text-gray-500">Duration (minutes)</label>
+              <label class="text-xs font-medium text-gray-500">Service Duration (minutes)</label>
               <input type="number" min="15" step="15" name="duration_minutes" id="f-duration" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">How long this booking occupies the church calendar.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Buffer after booking</label>
+              <label class="text-xs font-medium text-gray-500">Buffer After Booking</label>
               <input type="number" min="0" step="5" name="booking_buffer_minutes" id="f-buffer" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Extra protected minutes after the service for clearing, photos, or preparation.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Min advance days</label>
+              <label class="text-xs font-medium text-gray-500">Minimum Advance Days</label>
               <input type="number" min="0" name="min_advance_days" id="f-min-days" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Example: 7 means parishioners must book at least 7 days before the service.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Max advance days</label>
+              <label class="text-xs font-medium text-gray-500">Maximum Advance Days</label>
               <input type="number" min="1" name="max_advance_days" id="f-max-days" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Example: 180 means dates beyond 6 months are not shown yet.</p>
             </div>
           </div>
 
@@ -133,21 +162,29 @@
             </label>
           </div>
 
+          <div class="mb-4 rounded-xl bg-white/80 border border-gold-100 p-4 text-xs text-gray-600 leading-relaxed">
+            <strong class="text-gold-800">Special Booking legend:</strong>
+            the fee is charged only for Special bookings; the start/end time defines the daily booking window; the interval controls how often selectable start times are generated.
+          </div>
+
           <div id="special-settings" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label class="text-xs font-medium text-gray-500">Special Fee (₱)</label>
+              <label class="text-xs font-medium text-gray-500">Special Booking Fee (₱)</label>
               <input type="number" min="0" step="0.01" name="special_fee" id="f-special-fee" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Amount charged for dates outside the regular parish schedule.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Available From</label>
+              <label class="text-xs font-medium text-gray-500">Special Hours Start</label>
               <input type="time" name="special_start_time" id="f-special-start" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Earliest time a Special booking may begin.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Available Until</label>
+              <label class="text-xs font-medium text-gray-500">Special Hours End</label>
               <input type="time" name="special_end_time" id="f-special-end" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Latest boundary for the service, including its duration.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Time Slot Interval</label>
+              <label class="text-xs font-medium text-gray-500">Start-Time Interval</label>
               <select name="slot_interval_minutes" id="f-slot-interval" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
                 <option value="15">15 minutes</option>
                 <option value="30">30 minutes</option>
@@ -156,6 +193,7 @@
                 <option value="90">1.5 hours</option>
                 <option value="120">2 hours</option>
               </select>
+              <p class="text-[11px] text-gray-400 mt-1">Example: 60 minutes creates 8:00, 9:00, 10:00… start choices.</p>
             </div>
           </div>
         </section>
@@ -202,7 +240,7 @@
 <!-- Regular schedule rule modal -->
 <div id="rule-modal" class="hidden fixed inset-0 z-[60] items-center justify-center p-4">
   <div class="absolute inset-0 bg-black/40" onclick="closeRuleModal()"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-6">
     <div class="flex items-center justify-between mb-5">
       <div>
         <div class="text-[10px] uppercase tracking-wider font-bold text-gold-600">Recurring schedule</div>
@@ -215,9 +253,15 @@
       <input type="hidden" name="id" id="r-id">
       <input type="hidden" name="service_type_id" id="r-service-id">
 
+      <div class="rounded-xl bg-parish-50 border border-parish-100 p-4 text-xs text-gray-600 leading-relaxed">
+        <div class="font-semibold text-parish-800 mb-1"><i class="ph ph-calendar-dots mr-1"></i> How a regular schedule rule works</div>
+        <p>Pick the weekday and which occurrence(s) of that weekday are allowed each month. Example: <strong>Thursday + 2,4 + 6:00 AM</strong> means every 2nd and 4th Thursday at 6:00 AM. Set Fee to <strong>0</strong> for a free schedule.</p>
+      </div>
+
       <div>
         <label class="text-xs font-medium text-gray-500">Rule Name</label>
         <input required name="rule_name" id="r-name" placeholder="e.g. Free Wedding - 2nd & 4th Thursday" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+        <p class="text-[11px] text-gray-400 mt-1">A staff-friendly label shown in the configuration and to parishioners.</p>
       </div>
 
       <div class="grid sm:grid-cols-2 gap-4">
@@ -232,11 +276,12 @@
             <option value="5">Friday</option>
             <option value="6">Saturday</option>
           </select>
+          <p class="text-[11px] text-gray-400 mt-1">The weekday on which this recurring schedule happens.</p>
         </div>
         <div>
           <label class="text-xs font-medium text-gray-500">Occurrences in Month</label>
           <input required name="week_numbers" id="r-weeks" placeholder="2,4" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
-          <p class="text-[11px] text-gray-400 mt-1">Example: 2,4 = second and fourth occurrence.</p>
+          <p class="text-[11px] text-gray-400 mt-1">Use comma-separated numbers: 1 = 1st, 2 = 2nd, 3 = 3rd, 4 = 4th, 5 = 5th. Example: <strong>2,4</strong>.</p>
         </div>
       </div>
 
@@ -244,29 +289,35 @@
         <div>
           <label class="text-xs font-medium text-gray-500">Start Time</label>
           <input required type="time" name="start_time" id="r-time" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">The exact start time parishioners may select.</p>
         </div>
         <div>
-          <label class="text-xs font-medium text-gray-500">Fee (₱)</label>
+          <label class="text-xs font-medium text-gray-500">Regular Schedule Fee (₱)</label>
           <input required type="number" min="0" step="0.01" name="fee_amount" id="r-fee" value="0" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">Enter 0.00 when this recurring schedule is free.</p>
         </div>
         <div>
           <label class="text-xs font-medium text-gray-500">Capacity</label>
           <input required type="number" min="1" name="capacity" id="r-capacity" value="1" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">How many bookings may share this exact regular slot. Use 1 for weddings.</p>
         </div>
       </div>
 
       <div class="grid sm:grid-cols-3 gap-4">
         <div>
-          <label class="text-xs font-medium text-gray-500">Valid From</label>
+          <label class="text-xs font-medium text-gray-500">Valid From <span class="font-normal text-gray-400">(optional)</span></label>
           <input type="date" name="valid_from" id="r-valid-from" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">Leave blank to make the rule effective immediately.</p>
         </div>
         <div>
-          <label class="text-xs font-medium text-gray-500">Valid Until</label>
+          <label class="text-xs font-medium text-gray-500">Valid Until <span class="font-normal text-gray-400">(optional)</span></label>
           <input type="date" name="valid_until" id="r-valid-until" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">Leave blank if this recurring rule has no planned end date.</p>
         </div>
         <div>
           <label class="text-xs font-medium text-gray-500">Display Order</label>
           <input type="number" name="display_order" id="r-order" value="0" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+          <p class="text-[11px] text-gray-400 mt-1">Lower numbers appear first when several regular rules exist.</p>
         </div>
       </div>
 

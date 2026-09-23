@@ -51,7 +51,7 @@ $weeks_label = static function ($value) {
   </div>
 
   <form id="booking-form" enctype="multipart/form-data" class="mt-6" novalidate>
-    <div id="booking-wizard-progress" class="sticky top-16 z-20 mb-5 rounded-2xl border border-gray-100 bg-white/95 backdrop-blur shadow-sm px-4 sm:px-6 py-4">
+    <div id="booking-wizard-progress" class="relative z-10 mb-5 rounded-2xl border border-gray-100 bg-white shadow-sm px-4 sm:px-6 py-4">
       <div class="grid grid-cols-3 gap-2 sm:gap-4">
         <button type="button" class="wizard-progress-item flex items-center gap-2 sm:gap-3 text-left" data-progress-step="1" onclick="goToCompletedStep(1)">
           <span class="wizard-progress-number w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-parish-700 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</span>

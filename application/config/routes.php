@@ -105,6 +105,12 @@ $route['my/mass-intentions']         = 'parishioner/mass_intention';
 $route['my/mass-intentions/store']   = 'parishioner/mass_intention/store';
 
 // ---- Admin area ----
+$route['admin/service_type/get/(:num)']                    = 'admin/service_type/get/$1';
+$route['admin/service_type/store']                         = 'admin/service_type/store';
+$route['admin/service_type/add-requirement']               = 'admin/service_type/add_requirement';
+$route['admin/service_type/delete-requirement/(:num)']     = 'admin/service_type/delete_requirement/$1';
+$route['admin/service_type/save-schedule-rule']            = 'admin/service_type/save_schedule_rule';
+$route['admin/service_type/delete-schedule-rule/(:num)']   = 'admin/service_type/delete_schedule_rule/$1';
 $route['admin']                      = 'admin/dashboard';
 $route['admin/(:any)']               = 'admin/$1';
 
