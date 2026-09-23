@@ -156,7 +156,7 @@ $novena_days = [
 
       <article class="rounded-[2rem] bg-parish-900 text-white shadow-heritage p-7 sm:p-9">
         <div class="w-12 h-12 rounded-2xl bg-white/10 text-gold-300 flex items-center justify-center text-2xl">
-          <i class="ph ph-house-heart"></i>
+          <i class="ph ph-house-line"></i>
         </div>
 
         <div x-show="lang === 'en'">

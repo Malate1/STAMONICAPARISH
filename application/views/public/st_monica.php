@@ -120,7 +120,7 @@ $timeline = [
         <p class="text-gray-700 leading-relaxed mt-5" x-show="lang==='ceb'" x-cloak>Ang iyang kinabuhi naghatag sa Sta. Monica Parish og espirituhanong identidad: usa ka komunidad nga nag-ampo alang sa pamilya, nag-uban sa mga naglisod, nagdawat sa mga mibalik sa pagtuo, ug nagpabiling malaumon taliwala sa kalisdanan.</p>
         <div class="mt-7 flex flex-wrap gap-3">
           <a href="<?= site_url('prayers') ?>" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-parish-800 text-white font-semibold hover:bg-parish-900 transition"><i class="ph ph-hands-praying"></i> <span x-show="lang==='en'">Prayers &amp; Novena</span><span x-show="lang==='ceb'" x-cloak>Mga Pag-ampo &amp; Nobena</span></a>
-          <a href="<?= site_url('about') ?>" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white border border-gold-200 text-parish-800 font-semibold hover:bg-gold-100 transition"><i class="ph ph-landmark"></i> <span x-show="lang==='en'">Parish Heritage</span><span x-show="lang==='ceb'" x-cloak>Kasaysayan sa Parokya</span></a>
+          <a href="<?= site_url('about') ?>" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white border border-gold-200 text-parish-800 font-semibold hover:bg-gold-100 transition"><i class="ph ph-columns"></i> <span x-show="lang==='en'">Parish Heritage</span><span x-show="lang==='ceb'" x-cloak>Kasaysayan sa Parokya</span></a>
         </div>
       </div>
     </div>

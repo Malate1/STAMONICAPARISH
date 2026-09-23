@@ -17,7 +17,7 @@ $secondary_links = [
     'priests' => ['label' => 'Our Priests', 'icon' => 'ph-church'],
     'prayers' => ['label' => 'Prayers & Novena', 'icon' => 'ph-hands-praying'],
     'st-monica' => ['label' => 'Life of St. Monica', 'icon' => 'ph-book-open-text'],
-    'about' => ['label' => 'Heritage', 'icon' => 'ph-landmark'],
+    'about' => ['label' => 'Heritage', 'icon' => 'ph-columns'],
 ];
 
 $all_links = [

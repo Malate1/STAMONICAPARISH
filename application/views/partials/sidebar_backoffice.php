@@ -31,12 +31,12 @@ if (!function_exists('nav_item')) {
       <?= nav_item(site_url($base . '/payment'), 'ph-credit-card', 'Payments', $seg2 === 'payment') ?>
       <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', $seg2 === 'record') ?>
       <?php if ($role === ROLE_SECRETARY): ?>
-        <?= nav_item(site_url('staff/service-config'), 'ph-calendar-gear', 'Service Availability', $seg2 === 'service-config') ?>
+        <?= nav_item(site_url('staff/service-config'), 'ph-calendar-dots', 'Service Availability', $seg2 === 'service-config') ?>
       <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($role === ROLE_SECRETARY): ?>
-      <?= nav_item(site_url('staff/mass_intention'), 'ph-candelabra', 'Mass Intentions', $seg2 === 'mass_intention') ?>
+      <?= nav_item(site_url('staff/mass_intention'), 'ph-hands-praying', 'Mass Intentions', $seg2 === 'mass_intention') ?>
       <?= nav_item(site_url('staff/walkin'), 'ph-user-plus', 'Walk-in Transaction', $seg2 === 'walkin') ?>
     <?php endif; ?>
 
@@ -80,7 +80,7 @@ if (!function_exists('nav_item')) {
         <?= nav_item(site_url($base . '/payment'), 'ph-credit-card', 'Payments', false) ?>
         <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', false) ?>
         <?php if ($role === ROLE_SECRETARY): ?>
-          <?= nav_item(site_url('staff/service-config'), 'ph-calendar-gear', 'Service Availability', false) ?>
+          <?= nav_item(site_url('staff/service-config'), 'ph-calendar-dots', 'Service Availability', false) ?>
         <?php endif; ?>
       <?php endif; ?>
       <?php if ($role === ROLE_PRIEST): ?>

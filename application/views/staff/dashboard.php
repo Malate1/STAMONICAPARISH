@@ -49,7 +49,7 @@
         <span class="text-xs font-medium text-gray-700">Review Bookings</span>
       </a>
       <a href="<?= site_url('staff/mass_intention') ?>" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-parish-300 text-center">
-        <i class="ph ph-candelabra text-2xl text-parish-700"></i>
+        <i class="ph ph-hands-praying text-2xl text-parish-700"></i>
         <span class="text-xs font-medium text-gray-700">Mass Intentions</span>
       </a>
       <a href="<?= site_url('staff/record') ?>" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-parish-300 text-center">
