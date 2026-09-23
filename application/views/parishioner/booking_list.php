@@ -7,7 +7,7 @@
 
 <div class="grid sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
   <?php
-    $icons = ['baptism' => 'ph-drop', 'wedding' => 'ph-rings', 'funeral' => 'ph-cross', 'confirmation' => 'ph-sparkle', 'house_blessing' => 'ph-house-line', 'vehicle_blessing' => 'ph-car', 'counseling' => 'ph-chats-circle'];
+    $icons = ['baptism' => 'ph-drop', 'wedding' => 'ph-heart', 'funeral' => 'ph-cross', 'confirmation' => 'ph-sparkle', 'house_blessing' => 'ph-house-line', 'vehicle_blessing' => 'ph-car', 'counseling' => 'ph-chats-circle'];
     foreach ($service_types as $s):
       $icon = $icons[$s['service_key']] ?? 'ph-hand-heart';
   ?>

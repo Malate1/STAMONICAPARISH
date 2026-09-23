@@ -26,7 +26,7 @@ $weeks_label = static function ($value) {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
       <div class="flex items-start gap-4">
         <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-2xl flex-shrink-0">
-          <i class="ph <?= $service['service_key'] === 'wedding' ? 'ph-rings' : ($service['service_key'] === 'baptism' ? 'ph-drop' : 'ph-calendar-check') ?>"></i>
+          <i class="ph <?= $service['service_key'] === 'wedding' ? 'ph-heart' : ($service['service_key'] === 'baptism' ? 'ph-drop' : 'ph-calendar-check') ?>"></i>
         </div>
         <div>
           <div class="text-xs uppercase tracking-[.14em] text-gold-200 font-semibold">Sacramental / Parish Booking</div>

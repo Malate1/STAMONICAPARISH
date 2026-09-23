@@ -241,7 +241,7 @@ $convent_img = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Santa_Monica
 
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <?php
-        $icons = ['baptism' => 'ph-drop', 'wedding' => 'ph-rings', 'funeral' => 'ph-cross', 'confirmation' => 'ph-sparkle', 'house_blessing' => 'ph-house-line', 'vehicle_blessing' => 'ph-car'];
+        $icons = ['baptism' => 'ph-drop', 'wedding' => 'ph-heart', 'funeral' => 'ph-cross', 'confirmation' => 'ph-sparkle', 'house_blessing' => 'ph-house-line', 'vehicle_blessing' => 'ph-car'];
         $shown = 0;
         foreach ($service_types as $s):
           if ($shown >= 7) break;
