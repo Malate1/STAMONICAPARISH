@@ -52,6 +52,7 @@ if (!function_exists('nav_item')) {
       <?= nav_item(site_url('admin/mass_schedule'), 'ph-clock', 'Mass Schedule', $seg2 === 'mass_schedule') ?>
       <?= nav_item(site_url('admin/announcement'), 'ph-megaphone', 'Announcements', $seg2 === 'announcement') ?>
       <?= nav_item(site_url('admin/event'), 'ph-calendar-star', 'Events', $seg2 === 'event') ?>
+      <?= nav_item(site_url('admin/project'), 'ph-folder-open', 'Projects & Giving', $seg2 === 'project') ?>
       <?= nav_item(site_url('admin/ministry'), 'ph-users-three', 'Ministries', $seg2 === 'ministry') ?>
 
       <div class="pt-3 pb-1 px-3 text-[11px] uppercase tracking-wide text-parish-400">Administration</div>
@@ -92,6 +93,9 @@ if (!function_exists('nav_item')) {
       <?php if ($role === ROLE_PRIEST): ?>
         <?= nav_item(site_url('priest/schedule'), 'ph-calendar-blank', 'My Schedule', false) ?>
         <?= nav_item(site_url('priest/mass-intentions'), 'ph-hands-praying', 'Mass Intention Reader', false) ?>
+      <?php endif; ?>
+      <?php if ($role === ROLE_ADMIN): ?>
+        <?= nav_item(site_url('admin/project'), 'ph-folder-open', 'Projects & Giving', false) ?>
       <?php endif; ?>
       <?= nav_item(site_url('logout'), 'ph-sign-out', 'Logout', false) ?>
     </nav>

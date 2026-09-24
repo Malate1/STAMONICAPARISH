@@ -7,7 +7,7 @@ class Payment extends Role_Controller
     {
         parent::__construct();
         $this->guard([ROLE_PARISHIONER]);
-        $this->load->model(['Payment_model', 'Booking_model', 'Certificate_model']);
+        $this->load->model(['Payment_model', 'Booking_model', 'Certificate_model', 'Donation_model']);
     }
 
     /** GET /my/payments - payment history */
@@ -19,7 +19,7 @@ class Payment extends Role_Controller
 
     /**
      * GET /my/payments/pay/{type}/{id} - GCash payment screen
-     * $type: service_booking | certificate_request
+     * $type: service_booking | certificate_request | donation
      */
     public function pay($type, $id)
     {
@@ -95,12 +95,19 @@ class Payment extends Role_Controller
         // Move the related booking/certificate into "payment verification" status
         if ($type === 'service_booking') {
             $this->Booking_model->change_status($id, 'payment_verification', $this->current_user['id'], 'Payment proof submitted');
-        } else {
+        } elseif ($type === 'certificate_request') {
             $this->Certificate_model->update($id, ['status' => 'payment_verification']);
         }
 
         $this->flash_success('Payment submitted. The parish secretary will verify it shortly.');
-        $this->json(['success' => true, 'redirect' => $type === 'service_booking' ? site_url('my/bookings/' . $id) : site_url('my/certificates/' . $id)]);
+        if ($type === 'service_booking') {
+            $redirect = site_url('my/bookings/' . $id);
+        } elseif ($type === 'certificate_request') {
+            $redirect = site_url('my/certificates/' . $id);
+        } else {
+            $redirect = site_url('my/donations/new');
+        }
+        $this->json(['success' => true, 'redirect' => $redirect]);
     }
 
     private function _resolve_payable($type, $id)
@@ -114,6 +121,12 @@ class Payment extends Role_Controller
             $c = $this->Certificate_model->get($id);
             if (!$c || (int) $c['user_id'] !== (int) $this->current_user['id']) return [null, 0, null];
             return [$c, $c['fee_amount'], 'Certificate Request — ' . $c['request_code']];
+        }
+        if ($type === 'donation') {
+            $d = $this->Donation_model->get($id);
+            if (!$d || (int) $d['user_id'] !== (int) $this->current_user['id']) return [null, 0, null];
+            $title = !empty($d['campaign_title']) ? 'Donation — ' . $d['campaign_title'] : 'General Parish Donation';
+            return [$d, $d['amount'], $title];
         }
         return [null, 0, null];
     }

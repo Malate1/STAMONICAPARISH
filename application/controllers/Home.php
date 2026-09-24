@@ -6,7 +6,7 @@ class Home extends Public_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['MassSchedule_model', 'Announcement_model', 'Event_model', 'Ministry_model', 'ServiceType_model', 'Certificate_model']);
+        $this->load->model(['MassSchedule_model', 'Announcement_model', 'Event_model', 'Ministry_model', 'ServiceType_model', 'Certificate_model', 'Project_model']);
     }
 
     public function index()
@@ -19,6 +19,7 @@ class Home extends Public_Controller
         $data['seasonal_event_duration'] = $data['seasonal_event'] ? $this->Event_model->event_duration_days($data['seasonal_event']) : 0;
         $data['service_types']   = $this->ServiceType_model->all_active();
         $data['priests']         = $this->User_model->priests(3);
+        $data['projects']        = $this->Project_model->active(3);
         $this->render_public('public/home', $data);
     }
 
@@ -102,9 +103,33 @@ class Home extends Public_Controller
         $this->render_public('public/contact');
     }
 
+    public function projects()
+    {
+        $data['projects'] = $this->Project_model->public_projects();
+        $data['featured_project'] = $this->Project_model->featured();
+        $this->render_public('public/projects', $data);
+    }
+
+    public function project_detail($slug)
+    {
+        $data['item'] = $this->Project_model->find_by_slug($slug);
+        if (!$data['item']) show_404();
+
+        $this->render_public('public/project_detail', $data);
+    }
+
     public function donate()
     {
-        $this->render_public('public/donate');
+        $data['projects'] = $this->Project_model->active();
+        $data['featured_project'] = $this->Project_model->featured();
+
+        $rows = $this->db->where_in('setting_key', ['gcash_qr_image','gcash_account_name','gcash_account_number'])
+            ->get('system_settings')->result_array();
+        $data['gcash'] = [];
+        foreach ($rows as $row) $data['gcash'][$row['setting_key']] = $row['setting_value'];
+
+        $data['general_raised'] = $this->Project_model->general_verified_raised();
+        $this->render_public('public/donate', $data);
     }
 
     public function verify_certificate($token)

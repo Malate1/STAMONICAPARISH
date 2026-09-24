@@ -465,10 +465,20 @@ CREATE TABLE donation_campaigns (
     title VARCHAR(200) NOT NULL,
     slug VARCHAR(220) NOT NULL UNIQUE,
     description TEXT DEFAULT NULL,
+    short_description VARCHAR(300) DEFAULT NULL,
+    category VARCHAR(100) DEFAULT NULL,
+    location VARCHAR(200) DEFAULT NULL,
+    start_date DATE DEFAULT NULL,
+    target_date DATE DEFAULT NULL,
     cover_image VARCHAR(255) DEFAULT NULL,
     goal_amount DECIMAL(12,2) DEFAULT NULL,
+    is_featured BOOLEAN NOT NULL DEFAULT 0,
+    display_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     status ENUM('active','closed') NOT NULL DEFAULT 'active',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_by INT UNSIGNED DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_campaign_featured (status, is_featured, display_order)
 ) ENGINE=InnoDB;
 
 CREATE TABLE donations (

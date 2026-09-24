@@ -15,6 +15,7 @@
     <a href="<?= site_url('my/bookings') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?= $u === 'bookings' ? 'bg-white/10 text-white font-medium' : 'text-parish-200 hover:bg-white/5' ?>"><i class="ph ph-calendar-check text-lg"></i> My Bookings</a>
     <a href="<?= site_url('my/certificates') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?= $u === 'certificates' ? 'bg-white/10 text-white font-medium' : 'text-parish-200 hover:bg-white/5' ?>"><i class="ph ph-scroll text-lg"></i> Certificates</a>
     <a href="<?= site_url('my/mass-intentions') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?= $u === 'mass-intentions' ? 'bg-white/10 text-white font-medium' : 'text-parish-200 hover:bg-white/5' ?>"><i class="ph ph-hands-praying text-lg"></i> Mass Intentions</a>
+    <a href="<?= site_url('my/donations/new') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?= $u === 'donations' ? 'bg-white/10 text-white font-medium' : 'text-parish-200 hover:bg-white/5' ?>"><i class="ph ph-heart text-lg"></i> Donations</a>
     <a href="<?= site_url('my/payments') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?= $u === 'payments' ? 'bg-white/10 text-white font-medium' : 'text-parish-200 hover:bg-white/5' ?>"><i class="ph ph-credit-card text-lg"></i> Payments</a>
     <a href="<?= site_url('my/profile') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?= $u === 'profile' ? 'bg-white/10 text-white font-medium' : 'text-parish-200 hover:bg-white/5' ?>"><i class="ph ph-user-circle text-lg"></i> My Profile</a>
 
@@ -38,6 +39,7 @@
       <a href="<?= site_url('my/bookings') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-calendar-check text-lg"></i> My Bookings</a>
       <a href="<?= site_url('my/certificates') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-scroll text-lg"></i> Certificates</a>
       <a href="<?= site_url('my/mass-intentions') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-hands-praying text-lg"></i> Mass Intentions</a>
+      <a href="<?= site_url('my/donations/new') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-heart text-lg"></i> Donations</a>
       <a href="<?= site_url('my/payments') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-credit-card text-lg"></i> Payments</a>
       <a href="<?= site_url('my/profile') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-user-circle text-lg"></i> My Profile</a>
       <a href="<?= site_url('logout') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-sign-out text-lg"></i> Logout</a>

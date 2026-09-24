@@ -401,6 +401,44 @@ $season_cover = !empty($seasonal_event['cover_image']) ? base_url($seasonal_even
   </div>
 </section>
 
+<?php if (!empty($projects)): ?>
+<!-- Parish Projects -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
+    <div>
+      <div class="heritage-kicker text-gold-600">Building together</div>
+      <h2 class="text-3xl sm:text-4xl font-bold text-parish-900 mt-2">Parish projects you can follow and support.</h2>
+      <p class="text-gray-600 mt-2 max-w-2xl">See current improvements, outreach initiatives and community projects, with verified donation progress shown transparently.</p>
+    </div>
+    <a href="<?= site_url('projects') ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-parish-700 hover:underline">View all projects <i class="ph ph-arrow-right"></i></a>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-5">
+    <?php foreach ($projects as $project):
+      $project_img = !empty($project['cover_image']) ? base_url($project['cover_image']) : $hero_img;
+    ?>
+      <a href="<?= site_url('projects/' . $project['slug']) ?>" class="group rounded-3xl overflow-hidden bg-white border border-stonewarm-200 hover:border-parish-200 hover:shadow-heritage transition duration-300">
+        <div class="relative h-44 overflow-hidden bg-parish-900">
+          <img src="<?= html_escape($project_img) ?>" alt="<?= html_escape($project['title']) ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent"></div>
+          <?php if (!empty($project['category'])): ?><div class="absolute bottom-4 left-4 text-[10px] uppercase tracking-wider font-bold text-gold-200"><?= html_escape($project['category']) ?></div><?php endif; ?>
+        </div>
+        <div class="p-5">
+          <h3 class="font-bold text-lg text-parish-900"><?= html_escape($project['title']) ?></h3>
+          <p class="text-sm text-gray-500 mt-2 line-clamp-2"><?= html_escape($project['short_description'] ?: mb_strimwidth(strip_tags($project['description']),0,110,'…')) ?></p>
+          <?php if ((float)$project['goal_amount'] > 0): ?>
+            <div class="mt-4">
+              <div class="flex justify-between text-[11px]"><span class="font-semibold text-gray-700"><?= peso($project['raised_amount']) ?> raised</span><span class="text-gray-400"><?= number_format((float)$project['progress_percent'],1) ?>%</span></div>
+              <div class="h-2 rounded-full bg-gray-100 overflow-hidden mt-2"><div class="h-full bg-parish-600 rounded-full" style="width:<?= min(100,(float)$project['progress_percent']) ?>%"></div></div>
+            </div>
+          <?php endif; ?>
+        </div>
+      </a>
+    <?php endforeach; ?>
+  </div>
+</section>
+<?php endif; ?>
+
 <!-- Support -->
 <section class="bg-parish-900 text-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-7">

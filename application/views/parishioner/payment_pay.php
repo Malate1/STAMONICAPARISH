@@ -1,12 +1,18 @@
+<?php
+$back_url = $type === 'service_booking'
+    ? site_url('my/bookings/' . $id)
+    : ($type === 'certificate_request' ? site_url('my/certificates/' . $id) : site_url('my/donations/new'));
+$is_donation = $type === 'donation';
+?>
 <div class="max-w-xl mx-auto">
-  <a href="<?= $type === 'service_booking' ? site_url('my/bookings/' . $id) : site_url('my/certificates/' . $id) ?>" class="text-sm text-parish-700 hover:underline">← Back</a>
+  <a href="<?= $back_url ?>" class="text-sm text-parish-700 hover:underline">← Back</a>
 
   <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 mt-4">
     <h1 class="text-xl font-semibold text-gray-900 mb-1">Pay via GCash</h1>
     <p class="text-sm text-gray-400 mb-6"><?= html_escape($title) ?></p>
 
     <div class="flex items-center justify-between p-4 rounded-xl bg-parish-50/60 border border-parish-100 mb-6">
-      <span class="text-sm text-gray-600">Amount Due</span>
+      <span class="text-sm text-gray-600"><?= $is_donation ? 'Donation Amount' : 'Amount Due' ?></span>
       <span class="text-xl font-semibold text-parish-700"><?= peso($amount) ?></span>
     </div>
 
@@ -24,7 +30,7 @@
 
     <ol class="text-xs text-gray-500 space-y-1.5 mb-6 list-decimal list-inside">
       <li>Scan the QR code above using your GCash app.</li>
-      <li>Pay the exact amount shown.</li>
+      <li><?= $is_donation ? 'Send the donation amount shown.' : 'Pay the exact amount shown.' ?></li>
       <li>Enter your GCash reference number and upload a screenshot of the payment below.</li>
     </ol>
 
@@ -39,7 +45,7 @@
         <label class="text-xs font-medium text-gray-500">Proof of Payment (screenshot)</label>
         <input required type="file" name="proof" accept=".jpg,.jpeg,.png,.pdf" class="mt-1 w-full text-sm">
       </div>
-      <button type="submit" class="w-full py-3 rounded-lg bg-parish-700 hover:bg-parish-800 text-white text-sm font-medium">Submit Payment</button>
+      <button type="submit" class="w-full py-3 rounded-lg bg-parish-700 hover:bg-parish-800 text-white text-sm font-medium"><?= $is_donation ? 'Submit Donation Payment' : 'Submit Payment' ?></button>
     </form>
   </div>
 </div>

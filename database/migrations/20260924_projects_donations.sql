@@ -1,0 +1,78 @@
+-- Sta. Monica Parish
+-- Parish projects / donation campaign enhancement
+-- Safe for shared hosting / InfinityFree: no stored procedures.
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='short_description'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN short_description VARCHAR(300) DEFAULT NULL AFTER description'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='category'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN category VARCHAR(100) DEFAULT NULL AFTER short_description'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='location'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN location VARCHAR(200) DEFAULT NULL AFTER category'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='start_date'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN start_date DATE DEFAULT NULL AFTER location'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='target_date'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN target_date DATE DEFAULT NULL AFTER start_date'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='is_featured'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0 AFTER target_date'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='display_order'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN display_order SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER is_featured'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='created_by'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN created_by INT UNSIGNED DEFAULT NULL AFTER display_order'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND COLUMN_NAME='updated_at'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='donation_campaigns' AND INDEX_NAME='idx_campaign_featured'),
+  'SELECT 1',
+  'ALTER TABLE donation_campaigns ADD INDEX idx_campaign_featured (status, is_featured, display_order)'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET FOREIGN_KEY_CHECKS = 1;

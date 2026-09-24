@@ -73,6 +73,8 @@ $route['prayers']                    = 'home/prayers';
 $route['st-monica']                  = 'home/st_monica';
 $route['about']                      = 'home/about';
 $route['contact']                    = 'home/contact';
+$route['projects']                   = 'home/projects';
+$route['projects/(:any)']            = 'home/project_detail/$1';
 $route['donate']                     = 'home/donate';
 $route['verify/(:any)']              = 'home/verify_certificate/$1';
 
@@ -98,6 +100,9 @@ $route['my/certificates/(:num)']     = 'parishioner/certificate/view/$1';
 $route['my/payments']                = 'parishioner/payment';
 $route['my/payments/pay/(:any)/(:num)'] = 'parishioner/payment/pay/$1/$2';
 $route['my/payments/submit']         = 'parishioner/payment/submit';
+$route['my/donations/new']           = 'parishioner/donation/create';
+$route['my/donations/new/(:num)']    = 'parishioner/donation/create/$1';
+$route['my/donations/store']         = 'parishioner/donation/store';
 $route['my/profile']                 = 'parishioner/profile';
 $route['my/profile/update']          = 'parishioner/profile/update';
 $route['my/profile/change-password'] = 'parishioner/profile/change_password';
@@ -110,6 +115,10 @@ $route['priest/mass-intentions']      = 'priest/mass_intention';
 $route['priest/mass-intentions/reader'] = 'priest/mass_intention/reader';
 
 // ---- Admin area ----
+$route['admin/project/datatable']                       = 'admin/project/datatable';
+$route['admin/project/get/(:num)']                      = 'admin/project/get/$1';
+$route['admin/project/store']                           = 'admin/project/store';
+$route['admin/project/delete/(:num)']                   = 'admin/project/delete/$1';
 $route['admin/event/seasonal-templates']                  = 'admin/event/seasonal_templates';
 $route['admin/event/prepare-seasonal']                    = 'admin/event/prepare_seasonal';
 $route['admin/event/activities/(:num)']                = 'admin/event/activities/$1';

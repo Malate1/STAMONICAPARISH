@@ -7,7 +7,7 @@ class Payment extends Role_Controller
     {
         parent::__construct();
         $this->guard([ROLE_ADMIN, ROLE_SECRETARY]);
-        $this->load->model(['Payment_model', 'Booking_model', 'Certificate_model', 'Notification_model']);
+        $this->load->model(['Payment_model', 'Booking_model', 'Certificate_model', 'Donation_model', 'Notification_model']);
     }
 
     public function index()
@@ -23,10 +23,16 @@ class Payment extends Role_Controller
 
         $data = [];
         foreach ($rows as $r) {
+            $payment_for = ucwords(str_replace('_', ' ', $r['payable_type'])) . ' #' . $r['payable_id'];
+            if ($r['payable_type'] === 'donation') {
+                $donation = $this->Donation_model->get($r['payable_id']);
+                $payment_for = 'Donation — ' . ($donation['campaign_title'] ?? 'General Parish Fund');
+            }
+
             $data[] = [
                 'payment_code' => $r['payment_code'],
                 'payer'        => $r['first_name'] . ' ' . $r['last_name'],
-                'for'          => ucwords(str_replace('_', ' ', $r['payable_type'])) . ' #' . $r['payable_id'],
+                'for'          => $payment_for,
                 'amount'       => peso($r['amount']),
                 'reference'    => $r['gcash_reference_no'] ?: '—',
                 'status'       => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
@@ -72,6 +78,17 @@ class Payment extends Role_Controller
             $this->Certificate_model->update($payment['payable_id'], ['status' => 'preparing']);
             $cert = $this->Certificate_model->get($payment['payable_id']);
             $this->Notification_model->push($cert['user_id'], 'Payment Verified', 'Your certificate payment has been verified. Official Receipt: ' . $receipt_no, site_url('my/certificates/' . $payment['payable_id']));
+        } elseif ($payment['payable_type'] === 'donation') {
+            $donation = $this->Donation_model->get($payment['payable_id']);
+            if ($donation && !empty($donation['user_id'])) {
+                $target = !empty($donation['campaign_title']) ? $donation['campaign_title'] : 'the parish';
+                $this->Notification_model->push(
+                    $donation['user_id'],
+                    'Donation Verified',
+                    'Thank you. Your donation to ' . $target . ' has been verified. Official Receipt: ' . $receipt_no,
+                    site_url('my/donations/new')
+                );
+            }
         }
 
         $this->log_activity('Verified GCash payment', 'payment', $payment['payment_code'] . ' — ' . $receipt_no);
@@ -95,8 +112,18 @@ class Payment extends Role_Controller
 
         if ($payment['payable_type'] === 'service_booking') {
             $this->Booking_model->change_status($payment['payable_id'], 'awaiting_payment', $this->current_user['id'], 'Payment rejected: ' . $reason);
-        } else {
+        } elseif ($payment['payable_type'] === 'certificate_request') {
             $this->Certificate_model->update($payment['payable_id'], ['status' => 'awaiting_payment']);
+        } elseif ($payment['payable_type'] === 'donation') {
+            $donation = $this->Donation_model->get($payment['payable_id']);
+            if ($donation && !empty($donation['user_id'])) {
+                $this->Notification_model->push(
+                    $donation['user_id'],
+                    'Donation Payment Needs Attention',
+                    'Your donation payment proof was not verified. Please review the reference/proof and submit again. Reason: ' . $reason,
+                    site_url('my/payments/pay/donation/' . $payment['payable_id'])
+                );
+            }
         }
 
         $this->log_activity('Rejected GCash payment', 'payment', $payment['payment_code']);

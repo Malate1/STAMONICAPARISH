@@ -13,6 +13,8 @@ $primary_links = [
 
 $secondary_links = [
     'events' => ['label' => 'Events', 'icon' => 'ph-calendar-star'],
+    'projects' => ['label' => 'Projects', 'icon' => 'ph-folder-open'],
+    'donate' => ['label' => 'Donate', 'icon' => 'ph-heart'],
     'ministries' => ['label' => 'Ministries', 'icon' => 'ph-users-three'],
     'priests' => ['label' => 'Our Priests', 'icon' => 'ph-church'],
     'prayers' => ['label' => 'Prayers & Novena', 'icon' => 'ph-hands-praying'],
@@ -25,6 +27,8 @@ $all_links = [
     'sacraments' => 'Sacraments',
     'announcements' => 'Announcements',
     'events' => 'Events',
+    'projects' => 'Projects',
+    'donate' => 'Donate',
     'ministries' => 'Ministries',
     'priests' => 'Our Priests',
     'prayers' => 'Prayers & Novena',
