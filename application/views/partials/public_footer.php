@@ -1,3 +1,7 @@
+<?php
+$footer_is_parishioner = !empty($current_user) && (int)$current_user['role_id'] === (int)ROLE_PARISHIONER;
+$footer_restricted = !empty($current_user) && !$footer_is_parishioner;
+?>
 <footer class="bg-parish-900 text-white mt-0">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <div class="grid sm:grid-cols-2 lg:grid-cols-[1.2fr_.8fr_.8fr_1fr] gap-10 lg:gap-12">
@@ -39,9 +43,15 @@
         <div class="text-sm font-semibold text-white mb-4">Parish Services</div>
         <ul class="space-y-2.5 text-sm text-white/60">
           <li><a href="<?= site_url('sacraments') ?>" class="hover:text-gold-200 transition">Sacraments &amp; Services</a></li>
-          <li><a href="<?= site_url('my/bookings/new/baptism') ?>" class="hover:text-gold-200 transition">Baptism</a></li>
-          <li><a href="<?= site_url('my/bookings/new/wedding') ?>" class="hover:text-gold-200 transition">Wedding</a></li>
-          <li><a href="<?= site_url('my/certificates/new') ?>" class="hover:text-gold-200 transition">Request Certificate</a></li>
+          <?php if ($footer_restricted): ?>
+            <li><span class="inline-flex items-center gap-1.5 text-white/35 cursor-not-allowed" title="Parishioner account required"><i class="ph ph-lock-key text-[11px]"></i>Baptism Booking</span></li>
+            <li><span class="inline-flex items-center gap-1.5 text-white/35 cursor-not-allowed" title="Parishioner account required"><i class="ph ph-lock-key text-[11px]"></i>Wedding Booking</span></li>
+            <li><span class="inline-flex items-center gap-1.5 text-white/35 cursor-not-allowed" title="Parishioner account required"><i class="ph ph-lock-key text-[11px]"></i>Request Certificate</span></li>
+          <?php else: ?>
+            <li><a href="<?= site_url('my/bookings/new/baptism') ?>" class="hover:text-gold-200 transition">Baptism</a></li>
+            <li><a href="<?= site_url('my/bookings/new/wedding') ?>" class="hover:text-gold-200 transition">Wedding</a></li>
+            <li><a href="<?= site_url('my/certificates/new') ?>" class="hover:text-gold-200 transition">Request Certificate</a></li>
+          <?php endif; ?>
           <li><a href="<?= site_url('donate') ?>" class="hover:text-gold-200 transition">Support the Parish</a></li>
         </ul>
       </div>

@@ -1,5 +1,7 @@
 <?php
 $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Santa_Monica_Church_Alburquerque_inside_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
+$is_parishioner_account = !empty($current_user) && (int)$current_user['role_id'] === (int)ROLE_PARISHIONER;
+$is_restricted_account = !empty($current_user) && !$is_parishioner_account;
 ?>
 
 <section class="relative overflow-hidden bg-parish-900 min-h-[360px] flex items-end">
@@ -25,13 +27,26 @@ $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Santa_Monica_Ch
     </div>
   </div>
 
+  <?php if ($is_restricted_account): ?>
+    <div class="mb-7 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+      <div class="flex gap-3">
+        <i class="ph ph-lock-key text-amber-700 text-xl mt-0.5"></i>
+        <div>
+          <div class="font-semibold text-amber-900 text-sm">Online applications are disabled for <?= html_escape(role_label($current_user['role_id'])) ?> accounts.</div>
+          <p class="text-xs text-amber-800/80 mt-1 leading-relaxed">You may browse service information here, but Baptism, Wedding and other applications can only be submitted from a Parishioner account. Your staff account will not open a parishioner booking form.</p>
+          <a href="<?= role_home_url($current_user['role_id']) ?>" class="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-amber-900 hover:underline"><i class="ph ph-arrow-left"></i> Return to <?= html_escape(role_label($current_user['role_id'])) ?> Portal</a>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
+
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
     <?php
       $icons = ['baptism' => 'ph-drop', 'wedding' => 'ph-heart', 'funeral' => 'ph-cross', 'confirmation' => 'ph-sparkle', 'house_blessing' => 'ph-house-line', 'vehicle_blessing' => 'ph-car', 'counseling' => 'ph-chats-circle'];
       foreach ($service_types as $s):
         $icon = $icons[$s['service_key']] ?? 'ph-hand-heart';
     ?>
-    <div class="group rounded-3xl bg-white border border-stonewarm-200 p-6 hover:border-parish-200 hover:shadow-heritage transition duration-300 flex flex-col">
+    <div class="group rounded-3xl bg-white border border-stonewarm-200 p-6 transition duration-300 flex flex-col <?= $is_restricted_account ? 'opacity-80' : 'hover:border-parish-200 hover:shadow-heritage' ?>">
       <div class="flex items-start justify-between gap-4">
         <div class="w-13 h-13 w-[52px] h-[52px] rounded-2xl bg-parish-50 text-parish-700 flex items-center justify-center text-2xl group-hover:bg-parish-800 group-hover:text-white transition">
           <i class="ph <?= $icon ?>"></i>
@@ -40,9 +55,16 @@ $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Santa_Monica_Ch
       </div>
       <h3 class="text-xl font-bold text-parish-900 mt-5"><?= html_escape($s['name']) ?></h3>
       <p class="text-sm text-gray-500 leading-relaxed mt-2 flex-1"><?= html_escape($s['description']) ?></p>
-      <a href="<?= site_url('my/bookings/new/' . $s['service_key']) ?>" class="mt-6 pt-4 border-t border-stonewarm-200 flex items-center justify-between text-sm font-semibold text-parish-700 group-hover:text-parish-900">
-        Begin application <i class="ph ph-arrow-right"></i>
-      </a>
+      <?php if ($is_restricted_account): ?>
+        <div class="mt-6 pt-4 border-t border-stonewarm-200 flex items-center justify-between text-sm font-semibold text-gray-400 cursor-not-allowed" title="Parishioner account required">
+          <span class="inline-flex items-center gap-2"><i class="ph ph-lock-key"></i> Parishioner account required</span>
+          <i class="ph ph-minus-circle"></i>
+        </div>
+      <?php else: ?>
+        <a href="<?= site_url('my/bookings/new/' . $s['service_key']) ?>" class="mt-6 pt-4 border-t border-stonewarm-200 flex items-center justify-between text-sm font-semibold text-parish-700 group-hover:text-parish-900">
+          <?= $is_parishioner_account ? 'Begin application' : 'Log in & begin application' ?> <i class="ph ph-arrow-right"></i>
+        </a>
+      <?php endif; ?>
     </div>
     <?php endforeach; ?>
   </div>

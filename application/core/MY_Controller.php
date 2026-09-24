@@ -134,8 +134,32 @@ class Role_Controller extends Auth_Controller
     protected function guard(array $roles)
     {
         $this->allowed_roles = $roles;
-        if (!in_array((int) $this->current_user['role_id'], $roles, true)) {
-            show_error('You do not have permission to access this page.', 403, 'Access Denied');
+
+        if (in_array((int) $this->current_user['role_id'], $roles, true)) {
+            return;
         }
+
+        $allowed_labels = array_map('role_label', $roles);
+        $current_label = role_label((int) $this->current_user['role_id']);
+
+        if ($this->input->is_ajax_request()) {
+            $this->json([
+                'success' => false,
+                'message' => 'This action is restricted to ' . implode(' / ', $allowed_labels) . ' accounts.',
+                'current_role' => $current_label,
+                'redirect' => role_home_url($this->current_user['role_id']),
+            ], 403);
+            $this->output->_display();
+            exit;
+        }
+
+        $this->output->set_status_header(403);
+        $this->render_public('errors/role_denied', [
+            'page_title' => 'Account Access Restriction',
+            'current_role_label' => $current_label,
+            'allowed_role_labels' => $allowed_labels,
+            'account_home_url' => role_home_url($this->current_user['role_id']),
+        ]);
+        exit;
     }
 }

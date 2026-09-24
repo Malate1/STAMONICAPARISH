@@ -1,4 +1,7 @@
 <?php
+$is_parishioner_account = !empty($current_user) && (int)$current_user['role_id'] === (int)ROLE_PARISHIONER;
+$is_restricted_account = !empty($current_user) && !$is_parishioner_account;
+
 $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Church_Alburquerque_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
 $interior_img = 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Santa_Monica_Church_Alburquerque_inside_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
 $convent_img = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Santa_Monica_Church_Alburquerque_with_convent_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
@@ -309,19 +312,37 @@ $season_cover = !empty($seasonal_event['cover_image']) ? base_url($seasonal_even
           $icon = $icons[$s['service_key']] ?? 'ph-hand-heart';
           $shown++;
       ?>
-      <a href="<?= site_url('my/bookings/new/' . $s['service_key']) ?>" class="group rounded-2xl border border-stonewarm-200 bg-stonewarm-50/40 p-5 hover:bg-parish-800 hover:border-parish-800 transition duration-300">
-        <div class="w-11 h-11 rounded-xl bg-white text-parish-700 flex items-center justify-center text-2xl shadow-sm group-hover:text-gold-600 transition">
-          <i class="ph <?= $icon ?>"></i>
+      <?php if ($is_restricted_account): ?>
+        <div class="rounded-2xl border border-stonewarm-200 bg-stonewarm-50/40 p-5 opacity-75 cursor-not-allowed" title="Online booking requires a Parishioner account">
+          <div class="w-11 h-11 rounded-xl bg-white text-parish-700 flex items-center justify-center text-2xl shadow-sm">
+            <i class="ph <?= $icon ?>"></i>
+          </div>
+          <div class="font-semibold text-gray-800 mt-4"><?= html_escape($s['name']) ?></div>
+          <div class="text-xs text-gray-500 mt-1 flex items-center gap-1.5"><i class="ph ph-lock-key"></i> Parishioner account required</div>
         </div>
-        <div class="font-semibold text-gray-800 mt-4 group-hover:text-white"><?= html_escape($s['name']) ?></div>
-        <div class="text-xs text-gray-500 mt-1 group-hover:text-white/65">View details &amp; apply online</div>
-      </a>
+      <?php else: ?>
+        <a href="<?= site_url('my/bookings/new/' . $s['service_key']) ?>" class="group rounded-2xl border border-stonewarm-200 bg-stonewarm-50/40 p-5 hover:bg-parish-800 hover:border-parish-800 transition duration-300">
+          <div class="w-11 h-11 rounded-xl bg-white text-parish-700 flex items-center justify-center text-2xl shadow-sm group-hover:text-gold-600 transition">
+            <i class="ph <?= $icon ?>"></i>
+          </div>
+          <div class="font-semibold text-gray-800 mt-4 group-hover:text-white"><?= html_escape($s['name']) ?></div>
+          <div class="text-xs text-gray-500 mt-1 group-hover:text-white/65"><?= $is_parishioner_account ? 'View details & apply online' : 'Log in & apply online' ?></div>
+        </a>
+      <?php endif; ?>
       <?php endforeach; ?>
-      <a href="<?= site_url('my/certificates/new') ?>" class="group rounded-2xl border border-gold-200 bg-gold-50 p-5 hover:bg-gold-500 hover:border-gold-500 transition duration-300">
-        <div class="w-11 h-11 rounded-xl bg-white text-gold-600 flex items-center justify-center text-2xl shadow-sm"><i class="ph ph-scroll"></i></div>
-        <div class="font-semibold text-gray-800 mt-4 group-hover:text-white">Request Certificate</div>
-        <div class="text-xs text-gray-500 mt-1 group-hover:text-white/75">Request sacramental records online</div>
-      </a>
+      <?php if ($is_restricted_account): ?>
+        <div class="rounded-2xl border border-gold-200 bg-gold-50 p-5 opacity-75 cursor-not-allowed" title="Certificate requests require a Parishioner account">
+          <div class="w-11 h-11 rounded-xl bg-white text-gold-600 flex items-center justify-center text-2xl shadow-sm"><i class="ph ph-scroll"></i></div>
+          <div class="font-semibold text-gray-800 mt-4">Request Certificate</div>
+          <div class="text-xs text-gray-500 mt-1 flex items-center gap-1.5"><i class="ph ph-lock-key"></i> Parishioner account required</div>
+        </div>
+      <?php else: ?>
+        <a href="<?= site_url('my/certificates/new') ?>" class="group rounded-2xl border border-gold-200 bg-gold-50 p-5 hover:bg-gold-500 hover:border-gold-500 transition duration-300">
+          <div class="w-11 h-11 rounded-xl bg-white text-gold-600 flex items-center justify-center text-2xl shadow-sm"><i class="ph ph-scroll"></i></div>
+          <div class="font-semibold text-gray-800 mt-4 group-hover:text-white">Request Certificate</div>
+          <div class="text-xs text-gray-500 mt-1 group-hover:text-white/75"><?= $is_parishioner_account ? 'Request sacramental records online' : 'Log in to request a certificate' ?></div>
+        </a>
+      <?php endif; ?>
     </div>
   </div>
 </section>
