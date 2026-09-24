@@ -144,6 +144,18 @@ $weeks_label = static function ($value) {
           </div>
         </div>
 
+        <?php if ($service['service_key'] === 'baptism'): ?>
+        <div class="mt-5 rounded-2xl border border-parish-100 bg-parish-50/60 p-4 sm:p-5">
+          <div class="flex gap-3">
+            <div class="w-10 h-10 rounded-xl bg-white text-parish-700 flex items-center justify-center flex-shrink-0"><i class="ph ph-users-three text-xl"></i></div>
+            <div class="text-xs text-gray-600 leading-relaxed">
+              <div class="font-semibold text-parish-900">Group Baptism sessions</div>
+              <p class="mt-1">More than one baby may be baptized during the same session. Regular / Free dates may have one published session for that day, while Special Booking dates may offer several time choices. Each schedule card shows how many baby slots are still available.</p>
+            </div>
+          </div>
+        </div>
+        <?php endif; ?>
+
         <?php if ($has_regular): ?>
         <div class="mt-5 rounded-2xl bg-parish-50/60 border border-parish-100 p-4">
           <div class="text-[11px] uppercase tracking-wider font-semibold text-parish-700 mb-2">Published Regular Schedule</div>
@@ -158,6 +170,9 @@ $weeks_label = static function ($value) {
                 <strong class="<?= (float) $rule['fee_amount'] === 0.0 ? 'text-emerald-700' : 'text-gold-700' ?>">
                   <?= (float) $rule['fee_amount'] === 0.0 ? 'FREE' : peso($rule['fee_amount']) ?>
                 </strong>
+                <?php if ((int) $rule['capacity'] > 1): ?>
+                  · <span class="text-parish-700 font-semibold"><?= (int) $rule['capacity'] ?> <?= $service['service_key'] === 'baptism' ? 'babies' : 'bookings' ?>/session</span>
+                <?php endif; ?>
               </span>
             <?php endforeach; ?>
           </div>
@@ -185,7 +200,12 @@ $weeks_label = static function ($value) {
                 <div class="text-[11px] uppercase tracking-wider font-semibold text-gold-700">Available special schedules</div>
                 <p class="text-xs text-gray-500 mt-1">Each choice already includes both the date and time. Conflicting Main Church reservations and unavailable priests are removed automatically.</p>
               </div>
-              <div class="text-sm font-bold text-gold-800 whitespace-nowrap"><?= peso($service['special_fee']) ?> special fee</div>
+              <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                <span class="px-2.5 py-1 rounded-full bg-white border border-gold-100 text-gold-800"><?= peso($service['special_fee']) ?> special fee</span>
+                <?php if ((int) ($service['special_capacity'] ?? 1) > 1): ?>
+                  <span class="px-2.5 py-1 rounded-full bg-white border border-parish-100 text-parish-700"><?= (int) $service['special_capacity'] ?> <?= $service['service_key'] === 'baptism' ? 'babies' : 'bookings' ?>/time slot</span>
+                <?php endif; ?>
+              </div>
             </div>
           </div>
 
@@ -517,7 +537,7 @@ function renderSlotButton(slot, type){
   var remaining = parseInt(slot.remaining || 1, 10);
   var nearby = Array.isArray(slot.nearby_bookings) ? slot.nearby_bookings : [];
   var capacityText = parseInt(slot.capacity || 1,10) > 1
-    ? '<div class="text-[10px] text-gray-400 mt-1">' + remaining + ' place' + (remaining === 1 ? '' : 's') + ' left</div>'
+    ? '<div class="text-[10px] text-gray-500 mt-1 flex items-center gap-1"><i class="ph ph-users-three text-parish-600"></i> ' + remaining + ' <?= $service['service_key'] === 'baptism' ? 'baby slot' : 'place' ?>' + (remaining === 1 ? '' : 's') + ' left in this session</div>'
     : '';
   var protectedText = slot.reserved_from && slot.reserved_until
     ? '<div class="text-[10px] text-gray-500 mt-2 flex items-center gap-1"><i class="ph ph-shield-check text-parish-600"></i> Church protected ' + escapeHtml(slot.reserved_from) + '–' + escapeHtml(slot.reserved_until) + '</div>'

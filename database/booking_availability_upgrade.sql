@@ -5,7 +5,8 @@ ALTER TABLE service_types
   ADD COLUMN uses_main_church TINYINT(1) NOT NULL DEFAULT 1 AFTER duration_minutes,
   ADD COLUMN allow_special_booking TINYINT(1) NOT NULL DEFAULT 0 AFTER uses_main_church,
   ADD COLUMN special_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER allow_special_booking,
-  ADD COLUMN special_start_time TIME NULL AFTER special_fee,
+  ADD COLUMN special_capacity SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER special_fee,
+  ADD COLUMN special_start_time TIME NULL AFTER special_capacity,
   ADD COLUMN special_end_time TIME NULL AFTER special_start_time,
   ADD COLUMN slot_interval_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 60 AFTER special_end_time,
   ADD COLUMN booking_buffer_before_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER slot_interval_minutes,
@@ -67,6 +68,7 @@ WHERE service_key = 'wedding';
 UPDATE service_types
 SET allow_special_booking = 1,
     special_fee = base_fee,
+    special_capacity = 1,
     uses_main_church = 1,
     booking_buffer_before_minutes = 30,
     booking_buffer_minutes = 30,

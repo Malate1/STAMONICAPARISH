@@ -356,8 +356,8 @@ class Booking_model extends CI_Model
                 'date_label' => $cursor->format('M j, Y'),
                 'rule_name' => 'Special Booking',
                 'fee' => (float) $service['special_fee'],
-                'capacity' => 1,
-                'remaining' => 1,
+                'capacity' => max(1, (int) ($service['special_capacity'] ?? 1)),
+                'remaining' => $availability['remaining'],
                 'reserved_from' => $availability['reserved_from'],
                 'reserved_until' => $availability['reserved_until'],
                 'nearby_bookings' => $availability['nearby_bookings'],
@@ -483,13 +483,15 @@ class Booking_model extends CI_Model
         $date = date('Y-m-d', $start_ts);
 
         $candidate_rule_id = null;
+        $candidate_booking_type = null;
         if ($exclude_booking_id) {
-            $candidate_booking = $this->db->select('schedule_rule_id')
+            $candidate_booking = $this->db->select('booking_type, schedule_rule_id')
                 ->get_where('service_bookings', ['id' => (int) $exclude_booking_id])->row_array();
             $candidate_rule_id = $candidate_booking['schedule_rule_id'] ?? null;
+            $candidate_booking_type = $candidate_booking['booking_type'] ?? null;
         }
 
-        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.schedule_rule_id,
+        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.booking_type, service_bookings.schedule_rule_id,
                 service_bookings.confirmed_date, service_types.name AS service_name,
                 service_types.duration_minutes, service_types.booking_buffer_before_minutes,
                 service_types.booking_buffer_minutes')
@@ -507,11 +509,19 @@ class Booking_model extends CI_Model
         foreach ($this->db->get()->result_array() as $row) {
             $existing_start = strtotime($row['confirmed_date']);
 
-            $same_group_event = $candidate_rule_id
+            $same_regular_group = $candidate_rule_id
                 && (int) $row['service_type_id'] === (int) $service_type_id
                 && (int) $row['schedule_rule_id'] === (int) $candidate_rule_id
                 && $existing_start === $start_ts;
-            if ($same_group_event) continue;
+
+            $same_special_group = $candidate_booking_type === 'special'
+                && ($row['booking_type'] ?? '') === 'special'
+                && (int) $row['service_type_id'] === (int) $service_type_id
+                && empty($row['schedule_rule_id'])
+                && max(1, (int) ($service['special_capacity'] ?? 1)) > 1
+                && $existing_start === $start_ts;
+
+            if ($same_regular_group || $same_special_group) continue;
 
             $existing_before = max(0, (int) ($row['booking_buffer_before_minutes'] ?? 0));
             $existing_duration = max(15, (int) ($row['duration_minutes'] ?? 60));
@@ -602,11 +612,11 @@ class Booking_model extends CI_Model
         $window_end = $start_ts + (($duration + $after) * 60);
         $date = date('Y-m-d', $start_ts);
 
-        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.schedule_rule_id,
+        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.booking_type, service_bookings.schedule_rule_id,
                 service_bookings.confirmed_date, service_bookings.status,
                 service_types.name AS service_name, service_types.duration_minutes,
                 service_types.booking_buffer_before_minutes, service_types.booking_buffer_minutes,
-                service_types.uses_main_church, service_types.requires_priest')
+                service_types.uses_main_church, service_types.requires_priest, service_types.special_capacity')
             ->from('service_bookings')
             ->join('service_types', 'service_types.id = service_bookings.service_type_id')
             ->where('service_bookings.confirmed_date IS NOT NULL', null, false)
@@ -619,7 +629,10 @@ class Booking_model extends CI_Model
 
         $rows = $this->db->get()->result_array();
         $same_slot_count = 0;
-        $capacity = $rule ? max(1, (int) $rule['capacity']) : 1;
+        $candidate_booking_type = $rule ? 'regular' : 'special';
+        $capacity = $rule
+            ? max(1, (int) $rule['capacity'])
+            : max(1, (int) ($service['special_capacity'] ?? 1));
         $priest_event_keys = [];
         $nearby_before = null;
         $nearby_after = null;
@@ -632,10 +645,18 @@ class Booking_model extends CI_Model
             $existing_window_start = $existing_start - ($existing_before * 60);
             $existing_window_end = $existing_start + (($existing_duration + $existing_after) * 60);
 
-            $same_capacity_slot = $rule
+            $same_regular_slot = $rule
                 && (int) $existing['service_type_id'] === (int) $service['id']
                 && (int) $existing['schedule_rule_id'] === (int) $rule['id']
                 && $existing_start === $start_ts;
+
+            $same_special_slot = !$rule
+                && (int) $existing['service_type_id'] === (int) $service['id']
+                && ($existing['booking_type'] ?? '') === $candidate_booking_type
+                && empty($existing['schedule_rule_id'])
+                && $existing_start === $start_ts;
+
+            $same_capacity_slot = $same_regular_slot || $same_special_slot;
 
             $overlaps = ($window_start < $existing_window_end && $window_end > $existing_window_start);
 
@@ -664,9 +685,16 @@ class Booking_model extends CI_Model
                 && !empty($existing['requires_priest'])
                 && $overlaps
                 && !$same_capacity_slot) {
-                $event_key = !empty($existing['schedule_rule_id'])
-                    ? 'rule:' . $existing['schedule_rule_id'] . ':' . $existing['confirmed_date']
-                    : 'booking:' . $existing['id'];
+                if (!empty($existing['schedule_rule_id'])) {
+                    $event_key = 'rule:' . $existing['schedule_rule_id'] . ':' . $existing['confirmed_date'];
+                } elseif (($existing['booking_type'] ?? '') === 'special'
+                    && max(1, (int) ($existing['special_capacity'] ?? 1)) > 1) {
+                    // Multiple families in one Special Baptism/group session
+                    // still consume one priest event, not one priest per baby.
+                    $event_key = 'special-group:' . $existing['service_type_id'] . ':' . $existing['confirmed_date'];
+                } else {
+                    $event_key = 'booking:' . $existing['id'];
+                }
                 $priest_event_keys[$event_key] = true;
             }
 
@@ -704,7 +732,9 @@ class Booking_model extends CI_Model
             return [
                 'available' => false,
                 'remaining' => 0,
-                'message' => 'This regular schedule is already fully booked.',
+                'message' => $candidate_booking_type === 'regular'
+                    ? 'This regular schedule is already fully booked.'
+                    : 'This special session is already fully booked.',
                 'reserved_from' => date('g:i A', $window_start),
                 'reserved_until' => date('g:i A', $window_end),
                 'nearby_bookings' => [],

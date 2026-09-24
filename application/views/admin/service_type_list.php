@@ -174,14 +174,19 @@
 
           <div class="mb-4 rounded-xl bg-white/80 border border-gold-100 p-4 text-xs text-gray-600 leading-relaxed">
             <strong class="text-gold-800">Special Booking legend:</strong>
-            you do not create special dates one by one. The system automatically treats eligible non-regular dates as Special Booking dates, then generates available start times using the configured hours, interval, protected church time, conflicts, and priest availability.
+            you do not create special dates one by one. The system automatically treats eligible non-regular dates as Special Booking dates, then generates available start times using the configured hours and interval. <strong>Babies / Bookings per Time Slot</strong> controls how many families may join the same session; Main Church conflicts and priest availability are still enforced.
           </div>
 
-          <div id="special-settings" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div id="special-settings" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label class="text-xs font-medium text-gray-500">Special Booking Fee (₱)</label>
               <input type="number" min="0" step="0.01" name="special_fee" id="f-special-fee" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
               <p class="text-[11px] text-gray-400 mt-1">Amount charged for dates outside the regular parish schedule.</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500">Special Slot Capacity</label>
+              <input type="number" min="1" name="special_capacity" id="f-special-capacity" value="1" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">For group Baptism, set how many babies can share one special Baptism session. Keep 1 for services such as Weddings.</p>
             </div>
             <div>
               <label class="text-xs font-medium text-gray-500">Special Hours Start</label>
@@ -310,7 +315,7 @@
         <div>
           <label class="text-xs font-medium text-gray-500">Capacity</label>
           <input required type="number" min="1" name="capacity" id="r-capacity" value="1" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
-          <p class="text-[11px] text-gray-400 mt-1">How many bookings may share this exact regular slot. Use 1 for weddings.</p>
+          <p class="text-[11px] text-gray-400 mt-1">How many bookings may share this exact regular session. Example: one free Baptism at 9:00 AM can accept several babies by setting Capacity above 1. Use 1 for Weddings.</p>
         </div>
       </div>
 
@@ -435,6 +440,7 @@ function editService(id){
 
     $('#f-special-enabled').prop('checked', parseInt(d.allow_special_booking,10) === 1);
     $('#f-special-fee').val(d.special_fee || 0);
+    $('#f-special-capacity').val(d.special_capacity || 1);
     $('#f-special-start').val(d.special_start_time ? String(d.special_start_time).slice(0,5) : '');
     $('#f-special-end').val(d.special_end_time ? String(d.special_end_time).slice(0,5) : '');
     $('#f-slot-interval').val(String(d.slot_interval_minutes || 60));
@@ -569,11 +575,12 @@ $('#svc-form').on('submit', function(e){
         $('#f-buffer-before').val(res.data.booking_buffer_before_minutes);
         $('#f-duration').val(res.data.duration_minutes);
         $('#f-buffer').val(res.data.booking_buffer_minutes);
+        $('#f-special-capacity').val(res.data.special_capacity || 1);
       }
 
       toastr.success(
         (res.message || 'Service settings saved.') +
-        (res.data ? ' Protected time: ' + res.data.booking_buffer_before_minutes + ' + ' + res.data.duration_minutes + ' + ' + res.data.booking_buffer_minutes + ' min.' : '')
+        (res.data ? ' Protected time: ' + res.data.booking_buffer_before_minutes + ' + ' + res.data.duration_minutes + ' + ' + res.data.booking_buffer_minutes + ' min.' + (parseInt(res.data.special_capacity || 1,10) > 1 ? ' Special slot capacity: ' + res.data.special_capacity + '.' : '') : '')
       );
       setTimeout(function(){ location.reload(); }, 700);
     } else {

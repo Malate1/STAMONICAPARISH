@@ -110,6 +110,7 @@ CREATE TABLE service_types (
     uses_main_church BOOLEAN NOT NULL DEFAULT 1,
     allow_special_booking BOOLEAN NOT NULL DEFAULT 0,
     special_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+    special_capacity SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     special_start_time TIME DEFAULT NULL,
     special_end_time TIME DEFAULT NULL,
     slot_interval_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 60,
@@ -524,7 +525,7 @@ INSERT INTO service_types (service_key, name, category, description, base_fee, r
 
 -- Availability defaults. Staff may change these in Service Configuration.
 UPDATE service_types SET allow_special_booking = 1, special_fee = 9000.00, uses_main_church = 1, booking_buffer_before_minutes = 60, booking_buffer_minutes = 45, requires_priest = 1 WHERE service_key = 'wedding';
-UPDATE service_types SET allow_special_booking = 1, special_fee = base_fee, uses_main_church = 1, booking_buffer_before_minutes = 30, booking_buffer_minutes = 30, requires_priest = 1 WHERE service_key = 'baptism';
+UPDATE service_types SET allow_special_booking = 1, special_fee = base_fee, special_capacity = 1, uses_main_church = 1, booking_buffer_before_minutes = 30, booking_buffer_minutes = 30, requires_priest = 1 WHERE service_key = 'baptism';
 UPDATE service_types SET booking_buffer_before_minutes = 30, booking_buffer_minutes = 30, requires_priest = 1 WHERE service_key = 'funeral';
 UPDATE service_types SET uses_main_church = 0, requires_priest = 1 WHERE service_key IN ('house_blessing','vehicle_blessing','counseling');
 

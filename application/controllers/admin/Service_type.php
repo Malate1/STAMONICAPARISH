@@ -56,7 +56,7 @@ class Service_type extends Role_Controller
         // These fields were added by the booking resource-protection upgrade.
         // Do not report a false "saved" state when the production database has
         // not yet been migrated.
-        foreach (['booking_buffer_before_minutes', 'booking_buffer_minutes', 'requires_priest'] as $column) {
+        foreach (['booking_buffer_before_minutes', 'booking_buffer_minutes', 'special_capacity', 'requires_priest'] as $column) {
             if (!$this->db->field_exists($column, 'service_types')) {
                 return $this->json([
                     'success' => false,
@@ -71,6 +71,7 @@ class Service_type extends Role_Controller
         $buffer_after = is_numeric($this->input->post('booking_buffer_minutes'))
             ? max(0, (int) $this->input->post('booking_buffer_minutes'))
             : 0;
+        $special_capacity = max(1, (int) ($this->input->post('special_capacity') ?: 1));
 
         $payload = [
             'name'                          => $this->input->post('name', true),
@@ -80,6 +81,7 @@ class Service_type extends Role_Controller
             'uses_main_church'              => $this->input->post('uses_main_church') ? 1 : 0,
             'allow_special_booking'         => $allow_special,
             'special_fee'                   => is_numeric($this->input->post('special_fee')) ? max(0, (float) $this->input->post('special_fee')) : 0,
+            'special_capacity'              => $special_capacity,
             'special_start_time'            => $allow_special ? $special_start : null,
             'special_end_time'              => $allow_special ? $special_end : null,
             'slot_interval_minutes'         => max(15, (int) ($this->input->post('slot_interval_minutes') ?: 60)),
@@ -107,11 +109,12 @@ class Service_type extends Role_Controller
         $persisted = $this->ServiceType_model->get($service_id);
 
         if ((int) ($persisted['booking_buffer_before_minutes'] ?? -1) !== $buffer_before
-            || (int) ($persisted['booking_buffer_minutes'] ?? -1) !== $buffer_after) {
+            || (int) ($persisted['booking_buffer_minutes'] ?? -1) !== $buffer_after
+            || (int) ($persisted['special_capacity'] ?? -1) !== $special_capacity) {
             log_message('error', 'Service buffer verification failed after update for service ID ' . $service_id);
             return $this->json([
                 'success' => false,
-                'message' => 'The protection minutes were not persisted by the database. Run database/migrations/20260924_booking_resource_protection.sql in phpMyAdmin, then try again.'
+                'message' => 'The booking protection/capacity values were not persisted by the database. Run database/migrations/20260924_booking_resource_protection.sql in phpMyAdmin, then try again.'
             ]);
         }
 
@@ -123,6 +126,7 @@ class Service_type extends Role_Controller
                 'booking_buffer_before_minutes' => (int) ($persisted['booking_buffer_before_minutes'] ?? 0),
                 'duration_minutes' => (int) ($persisted['duration_minutes'] ?? 0),
                 'booking_buffer_minutes' => (int) ($persisted['booking_buffer_minutes'] ?? 0),
+                'special_capacity' => (int) ($persisted['special_capacity'] ?? 1),
             ],
         ]);
     }

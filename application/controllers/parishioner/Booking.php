@@ -151,8 +151,12 @@ class Booking extends Role_Controller
 
         $this->db->trans_start();
 
-        // Recheck inside the transaction to reduce the chance of two people
-        // claiming the same church slot at nearly the same moment.
+        // Serialize submissions for this service while we re-check capacity.
+        // This prevents two families from taking the final Baptism place at
+        // the same instant and exceeding the configured session capacity.
+        $this->db->query('SELECT id FROM service_types WHERE id = ? FOR UPDATE', [$service_id]);
+
+        // Recheck inside the transaction after acquiring the service lock.
         $slot = $this->Booking_model->resolve_slot(
             $service_id,
             $booking_type,

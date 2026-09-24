@@ -49,6 +49,18 @@ SET @sql = IF(
     SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'service_types'
+      AND COLUMN_NAME = 'special_capacity'
+  ),
+  'SELECT 1',
+  'ALTER TABLE service_types ADD COLUMN special_capacity SMALLINT UNSIGNED NOT NULL DEFAULT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'service_types'
       AND COLUMN_NAME = 'requires_priest'
   ),
   'SELECT 1',
@@ -69,6 +81,20 @@ SET booking_buffer_before_minutes = 30,
     booking_buffer_minutes = 30,
     requires_priest = 1
 WHERE service_key = 'baptism';
+
+-- If staff already configured a group capacity on the regular Baptism rule,
+-- reuse that as the initial Special Baptism capacity. Skip this safely when
+-- the regular-rule table has not been installed yet.
+SET @sql = IF(
+  EXISTS(
+    SELECT 1 FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'service_schedule_rules'
+  ),
+  'UPDATE service_types st LEFT JOIN (SELECT service_type_id, MAX(capacity) AS max_capacity FROM service_schedule_rules GROUP BY service_type_id) rules ON rules.service_type_id = st.id SET st.special_capacity = CASE WHEN COALESCE(rules.max_capacity, 1) > 1 THEN rules.max_capacity ELSE st.special_capacity END WHERE st.service_key = ''baptism''',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 UPDATE service_types
 SET booking_buffer_before_minutes = 30,
