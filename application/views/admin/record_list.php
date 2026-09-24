@@ -17,7 +17,7 @@
 <div class="bg-white rounded-2xl border border-gray-100 p-6">
   <div class="overflow-x-auto">
     <table id="rec-table" class="w-full text-sm">
-      <thead><tr><th>Type</th><th>Name</th><th>Date</th><th>Parents</th><th>Registry</th><th></th></tr></thead>
+      <thead><tr><th>Type</th><th>Name</th><th>Date</th><th>Parents</th><th>Registry</th><th class="text-center">Actions</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>

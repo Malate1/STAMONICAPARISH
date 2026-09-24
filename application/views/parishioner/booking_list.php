@@ -24,7 +24,7 @@
     <table id="bookings-table" class="w-full text-sm">
       <thead>
         <tr>
-          <th>Code</th><th>Service</th><th>Reserved Schedule</th><th>Status</th><th>Submitted</th><th></th>
+          <th>Code</th><th>Service</th><th>Reserved Schedule</th><th>Status</th><th>Submitted</th><th class="text-center">Actions</th>
         </tr>
       </thead>
       <tbody></tbody>

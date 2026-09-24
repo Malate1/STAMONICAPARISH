@@ -35,7 +35,9 @@ class Booking extends Role_Controller
                     . '<div class="text-[11px] mt-0.5 ' . (($r['booking_type'] ?? 'special') === 'regular' ? 'text-emerald-600' : 'text-amber-600') . '">' . (($r['booking_type'] ?? 'special') === 'regular' ? 'Regular / Parish Schedule' : 'Special Booking') . '</div>',
                 'status' => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
                 'created_at' => format_date($r['created_at']),
-                'actions' => '<a href="' . site_url('my/bookings/' . $r['id']) . '" class="text-emerald-700 hover:underline font-medium">View</a>',
+                'actions' => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_link('ph-eye', 'View booking', site_url('my/bookings/' . $r['id']))
+                    . '</div>',
             ];
         }
 

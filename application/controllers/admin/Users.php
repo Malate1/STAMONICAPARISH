@@ -30,10 +30,16 @@ class Users extends Role_Controller
                     ? '<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Active</span>'
                     : '<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">' . ucfirst($r['status']) . '</span>',
                 'created_at' => format_date($r['created_at']),
-                'actions' => '<div class="flex gap-3">
-                        <button onclick="editUser(' . $r['id'] . ')" class="text-emerald-700 hover:underline font-medium">Edit</button>
-                        <button onclick="toggleUser(' . $r['id'] . ', \'' . $r['status'] . '\')" class="text-amber-600 hover:underline font-medium">' . ($r['status'] === 'active' ? 'Deactivate' : 'Activate') . '</button>
-                    </div>',
+                'actions' => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_button('ph-pencil-simple', 'Edit account', 'editUser(' . (int) $r['id'] . ')')
+                    . dt_icon_button('ph-key', 'Reset password', 'resetUserPassword(' . (int) $r['id'] . ')', 'blue')
+                    . dt_icon_button(
+                        $r['status'] === 'active' ? 'ph-user-minus' : 'ph-user-check',
+                        $r['status'] === 'active' ? 'Deactivate account' : 'Activate account',
+                        'toggleUser(' . (int) $r['id'] . ', \'\'' . $r['status'] . '\'\')',
+                        'warning'
+                    )
+                    . '</div>',
             ];
         }
 
@@ -123,6 +129,39 @@ class Users extends Role_Controller
 
         $this->log_activity('Saved user account', 'users', $payload['email']);
         $this->json(['success' => true, 'message' => $msg]);
+    }
+
+    public function reset_password($id)
+    {
+        $user = $this->User_model->get((int) $id);
+        if (!$user) {
+            return $this->json(['success' => false, 'message' => 'Account not found.'], 404);
+        }
+
+        $temporary_password = 'SMC-' . strtoupper(bin2hex(random_bytes(4)));
+
+        $saved = $this->User_model->update((int) $id, [
+            'password_hash' => password_hash($temporary_password, PASSWORD_BCRYPT),
+            'failed_login_attempts' => 0,
+            'locked_until' => null,
+            'remember_token' => null,
+        ]);
+
+        if (!$saved) {
+            return $this->json(['success' => false, 'message' => 'The password could not be reset. Please try again.']);
+        }
+
+        $this->log_activity(
+            'Reset user password',
+            'users',
+            trim($user['first_name'] . ' ' . $user['last_name']) . ' <' . $user['email'] . '>'
+        );
+
+        $this->json([
+            'success' => true,
+            'message' => 'Password reset successfully.',
+            'temporary_password' => $temporary_password,
+        ]);
     }
 
     public function toggle($id)

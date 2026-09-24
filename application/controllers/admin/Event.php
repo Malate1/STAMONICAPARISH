@@ -30,10 +30,10 @@ class Event extends Role_Controller
                 'event_date' => format_date($r['event_date']),
                 'registrations' => $r['allow_registration'] ? ($reg . ($r['registration_limit'] ? '/' . $r['registration_limit'] : '')) : 'N/A',
                 'status'     => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . ($r['status'] === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600') . '">' . ucfirst($r['status']) . '</span>',
-                'actions'    => '<div class="flex gap-3">
-                        <button onclick="editEvent(' . $r['id'] . ')" class="text-emerald-700 hover:underline font-medium">Edit</button>
-                        <button onclick="deleteEvent(' . $r['id'] . ')" class="text-red-600 hover:underline font-medium">Delete</button>
-                    </div>',
+                'actions'    => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_button('ph-pencil-simple', 'Edit event', 'editEvent(' . (int) $r['id'] . ')')
+                    . dt_icon_button('ph-trash', 'Delete event', 'deleteEvent(' . (int) $r['id'] . ')', 'danger')
+                    . '</div>',
             ];
         }
 

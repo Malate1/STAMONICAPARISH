@@ -8,7 +8,7 @@
 <div class="bg-white rounded-2xl border border-gray-100 p-6">
   <div class="overflow-x-auto">
     <table id="cert-table" class="w-full text-sm">
-      <thead><tr><th>Code</th><th>Type</th><th>Requestor</th><th>Copies</th><th>Status</th><th>Date</th><th></th></tr></thead>
+      <thead><tr><th>Code</th><th>Type</th><th>Requestor</th><th>Copies</th><th>Status</th><th>Date</th><th class="text-center">Actions</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>

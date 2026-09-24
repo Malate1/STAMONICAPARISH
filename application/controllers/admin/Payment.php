@@ -30,11 +30,14 @@ class Payment extends Role_Controller
                 'amount'       => peso($r['amount']),
                 'reference'    => $r['gcash_reference_no'] ?: '—',
                 'status'       => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
-                'actions'      => $r['status'] === 'submitted'
-                    ? '<div class="flex gap-3">
-                        <button onclick="viewPayment(' . $r['id'] . ')" class="text-emerald-700 hover:underline font-medium">Review</button>
-                       </div>'
-                    : '<button onclick="viewPayment(' . $r['id'] . ')" class="text-gray-500 hover:underline font-medium">View</button>',
+                'actions'      => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_button(
+                        'ph-eye',
+                        $r['status'] === 'submitted' ? 'Review payment' : 'View payment',
+                        'viewPayment(' . (int) $r['id'] . ')',
+                        $r['status'] === 'submitted' ? 'primary' : 'neutral'
+                    )
+                    . '</div>',
             ];
         }
 

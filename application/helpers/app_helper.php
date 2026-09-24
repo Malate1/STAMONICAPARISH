@@ -106,6 +106,43 @@ if (!function_exists('day_name')) {
     }
 }
 
+if (!function_exists('dt_action_classes')) {
+    function dt_action_classes($tone = 'primary')
+    {
+        $map = [
+            'primary' => 'border-parish-100 bg-parish-50 text-parish-700 hover:bg-parish-100 hover:border-parish-200',
+            'danger'  => 'border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-200',
+            'warning' => 'border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-200',
+            'neutral' => 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300',
+            'blue'    => 'border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-200',
+        ];
+
+        return $map[$tone] ?? $map['primary'];
+    }
+}
+
+if (!function_exists('dt_icon_button')) {
+    function dt_icon_button($icon, $label, $onclick, $tone = 'primary')
+    {
+        $icon = htmlspecialchars($icon, ENT_QUOTES, 'UTF-8');
+        $label = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+        $onclick = htmlspecialchars($onclick, ENT_QUOTES, 'UTF-8');
+
+        return '<button type="button" onclick="' . $onclick . '" title="' . $label . '" aria-label="' . $label . '" class="inline-flex w-9 h-9 items-center justify-center rounded-lg border transition ' . dt_action_classes($tone) . '"><i class="ph ' . $icon . ' text-base"></i><span class="sr-only">' . $label . '</span></button>';
+    }
+}
+
+if (!function_exists('dt_icon_link')) {
+    function dt_icon_link($icon, $label, $url, $tone = 'primary')
+    {
+        $icon = htmlspecialchars($icon, ENT_QUOTES, 'UTF-8');
+        $label = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+        $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+
+        return '<a href="' . $url . '" title="' . $label . '" aria-label="' . $label . '" class="inline-flex w-9 h-9 items-center justify-center rounded-lg border transition ' . dt_action_classes($tone) . '"><i class="ph ' . $icon . ' text-base"></i><span class="sr-only">' . $label . '</span></a>';
+    }
+}
+
 if (!function_exists('initials')) {
     function initials($name)
     {

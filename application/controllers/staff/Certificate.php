@@ -30,7 +30,9 @@ class Certificate extends Role_Controller
                 'copies'       => $r['number_of_copies'],
                 'status'       => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
                 'created_at'   => format_date($r['created_at']),
-                'actions'      => '<a href="' . site_url('staff/certificate/view/' . $r['id']) . '" class="text-emerald-700 hover:underline font-medium">Process</a>',
+                'actions'      => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_link('ph-eye', 'Process certificate request', site_url('staff/certificate/view/' . $r['id']))
+                    . '</div>',
             ];
         }
 

@@ -38,7 +38,9 @@ class Record extends Role_Controller
                 'sacrament_date' => format_date($r['sacrament_date']),
                 'parents'   => trim(($r['father_name'] ?: '') . ' / ' . ($r['mother_name'] ?: ''), ' /'),
                 'registry'  => 'Bk. ' . ($r['registry_book'] ?: '—') . ' Pg. ' . ($r['registry_page'] ?: '—'),
-                'actions'   => '<button onclick="editRecord(' . $r['id'] . ')" class="text-emerald-700 hover:underline font-medium">Edit</button>',
+                'actions'   => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_button('ph-pencil-simple', 'Edit sacramental record', 'editRecord(' . (int) $r['id'] . ')')
+                    . '</div>',
             ];
         }
 

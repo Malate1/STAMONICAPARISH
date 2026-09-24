@@ -9,7 +9,7 @@
 <div class="bg-white rounded-2xl border border-gray-100 p-6">
   <div class="overflow-x-auto">
     <table id="schedule-table" class="w-full text-sm">
-      <thead><tr><th>Title</th><th>Recurs</th><th>Time</th><th>Location</th><th>Presider</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Title</th><th>Recurs</th><th>Time</th><th>Location</th><th>Presider</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>

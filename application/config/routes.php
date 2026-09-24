@@ -110,6 +110,7 @@ $route['priest/mass-intentions']      = 'priest/mass_intention';
 $route['priest/mass-intentions/reader'] = 'priest/mass_intention/reader';
 
 // ---- Admin area ----
+$route['admin/users/reset-password/(:num)']              = 'admin/users/reset_password/$1';
 $route['admin/service_type/get/(:num)']                    = 'admin/service_type/get/$1';
 $route['admin/service_type/store']                         = 'admin/service_type/store';
 $route['admin/service_type/add-requirement']               = 'admin/service_type/add_requirement';

@@ -37,10 +37,10 @@ class Mass_schedule extends Role_Controller
                 'status'   => $r['is_active']
                     ? '<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Active</span>'
                     : '<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Inactive</span>',
-                'actions'  => '<div class="flex gap-3">
-                        <button onclick="editSchedule(' . $r['id'] . ')" class="text-emerald-700 hover:underline font-medium">Edit</button>
-                        <button onclick="deleteSchedule(' . $r['id'] . ')" class="text-red-600 hover:underline font-medium">Delete</button>
-                    </div>',
+                'actions'  => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
+                    . dt_icon_button('ph-pencil-simple', 'Edit Mass schedule', 'editSchedule(' . (int) $r['id'] . ')')
+                    . dt_icon_button('ph-trash', 'Delete Mass schedule', 'deleteSchedule(' . (int) $r['id'] . ')', 'danger')
+                    . '</div>',
             ];
         }
 

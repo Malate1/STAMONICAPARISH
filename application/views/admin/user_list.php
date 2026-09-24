@@ -9,7 +9,7 @@
 <div class="bg-white rounded-2xl border border-gray-100 p-6">
   <div class="overflow-x-auto">
     <table id="user-table" class="w-full text-sm">
-      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th class="text-center">Actions</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -139,6 +139,50 @@ function editUser(id){
     openModal();
   });
 }
+function resetUserPassword(id){
+  Swal.fire({
+    icon:'warning',
+    title:'Reset this account password?',
+    text:'A new temporary password will be generated. The previous password will stop working immediately.',
+    showCancelButton:true,
+    confirmButtonText:'Reset Password',
+    confirmButtonColor:'#235a38'
+  }).then(function(result){
+    if(!result.isConfirmed) return;
+
+    $.post('<?= site_url('admin/users/reset-password/') ?>' + id, function(res){
+      if(!res.success){
+        Swal.fire({icon:'error', title:'Could not reset password', text:res.message || 'Please try again.', confirmButtonColor:'#235a38'});
+        return;
+      }
+
+      var temp = String(res.temporary_password || '');
+      Swal.fire({
+        icon:'success',
+        title:'Password Reset',
+        html:
+          '<p class="text-sm text-gray-500 mb-3">Give this temporary password directly to the account owner.</p>' +
+          '<div class="rounded-xl border border-gray-200 bg-gray-50 p-4">' +
+            '<div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">Temporary Password</div>' +
+            '<div id="temporary-password-value" class="font-mono text-lg font-bold text-gray-900 select-all">' + temp + '</div>' +
+          '</div>' +
+          '<p class="text-xs text-amber-700 mt-3">For security, do not send this password in a public or shared channel.</p>',
+        confirmButtonText:'Done',
+        confirmButtonColor:'#235a38',
+        showDenyButton:true,
+        denyButtonText:'Copy Password',
+        denyButtonColor:'#4b5563'
+      }).then(function(copyResult){
+        if(copyResult.isDenied && navigator.clipboard){
+          navigator.clipboard.writeText(temp).then(function(){ toastr.success('Temporary password copied.'); });
+        }
+      });
+    }).fail(function(){
+      Swal.fire({icon:'error', title:'Could not reset password', text:'The server did not accept the request.', confirmButtonColor:'#235a38'});
+    });
+  });
+}
+
 function toggleUser(id, status){
   var action = status === 'active' ? 'deactivate' : 'activate';
   Swal.fire({ icon:'question', title:'Are you sure you want to ' + action + ' this account?', showCancelButton:true, confirmButtonColor:'#235a38' })
@@ -162,7 +206,7 @@ $(function(){
     ajax: { url: '<?= site_url('admin/users/datatable') ?>', type: 'POST' },
     columns: [
       { data: 'name' }, { data: 'email' }, { data: 'role' }, { data: 'status', orderable: false },
-      { data: 'created_at' }, { data: 'actions', orderable: false, searchable: false }
+      { data: 'created_at' }, { data: 'actions', orderable: false, searchable: false, className: 'whitespace-nowrap' }
     ],
     language: { search: '', searchPlaceholder: 'Search accounts…' }
   });
