@@ -81,8 +81,8 @@
       <button type="button" onclick="closeModal()" class="w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center"><i class="ph ph-x text-xl"></i></button>
     </div>
 
-    <div class="overflow-y-auto p-6">
-      <form id="svc-form" class="space-y-6">
+    <form id="svc-form" class="flex-1 min-h-0 flex flex-col">
+      <div class="overflow-y-auto p-6 sm:p-6 space-y-6">
         <input type="hidden" name="id" id="f-id">
 
         <section class="rounded-2xl border border-gray-100 p-5">
@@ -236,14 +236,15 @@
           <div id="requirements-list" class="space-y-2"></div>
         </section>
 
-        <div class="sticky bottom-0 -mx-6 -mb-6 px-6 py-4 bg-white/95 backdrop-blur border-t border-gray-100 flex justify-end gap-3">
-          <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600">Cancel</button>
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold">
-            <i class="ph ph-floppy-disk mr-1"></i> Save Service Settings
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="flex-shrink-0 px-5 sm:px-6 py-4 bg-white border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 shadow-[0_-8px_24px_rgba(15,23,42,0.04)]">
+        <button type="button" onclick="closeModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+        <button type="submit" id="save-service-settings" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold">
+          <i class="ph ph-floppy-disk mr-1"></i> Save Service Settings
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -556,13 +557,42 @@ $('#rule-form').on('submit', function(e){
 
 $('#svc-form').on('submit', function(e){
   e.preventDefault();
+
+  var $btn = $('#save-service-settings');
+  var originalHtml = $btn.html();
+  $btn.prop('disabled', true).addClass('opacity-60 cursor-not-allowed')
+      .html('<i class="ph ph-spinner-gap animate-spin mr-1"></i> Saving…');
+
   $.post('<?= site_url($service_config_base . '/store') ?>', $(this).serialize(), function(res){
     if(res.success){
-      toastr.success(res.message);
-      setTimeout(function(){ location.reload(); }, 500);
+      if(res.data){
+        $('#f-buffer-before').val(res.data.booking_buffer_before_minutes);
+        $('#f-duration').val(res.data.duration_minutes);
+        $('#f-buffer').val(res.data.booking_buffer_minutes);
+      }
+
+      toastr.success(
+        (res.message || 'Service settings saved.') +
+        (res.data ? ' Protected time: ' + res.data.booking_buffer_before_minutes + ' + ' + res.data.duration_minutes + ' + ' + res.data.booking_buffer_minutes + ' min.' : '')
+      );
+      setTimeout(function(){ location.reload(); }, 700);
     } else {
-      Swal.fire({icon:'error', title:'Could not save service', text:res.message, confirmButtonColor:'#235a38'});
+      $btn.prop('disabled', false).removeClass('opacity-60 cursor-not-allowed').html(originalHtml);
+      Swal.fire({
+        icon:'error',
+        title:'Could not save service',
+        text:res.message || 'Please try again.',
+        confirmButtonColor:'#235a38'
+      });
     }
+  }).fail(function(xhr){
+    $btn.prop('disabled', false).removeClass('opacity-60 cursor-not-allowed').html(originalHtml);
+    Swal.fire({
+      icon:'error',
+      title:'Could not save service',
+      text:'The server did not accept the update. Please check the database migration and try again.',
+      confirmButtonColor:'#235a38'
+    });
   });
 });
 

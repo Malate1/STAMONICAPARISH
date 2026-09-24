@@ -53,28 +53,78 @@ class Service_type extends Role_Controller
             }
         }
 
-        $this->ServiceType_model->update($this->input->post('id'), [
-            'name'                       => $this->input->post('name', true),
-            'description'                => $this->input->post('description', true),
-            'base_fee'                   => $this->input->post('base_fee'),
-            'duration_minutes'           => max(15, (int) ($this->input->post('duration_minutes') ?: 60)),
-            'uses_main_church'           => $this->input->post('uses_main_church') ? 1 : 0,
-            'allow_special_booking'      => $allow_special,
-            'special_fee'                => is_numeric($this->input->post('special_fee')) ? max(0, (float) $this->input->post('special_fee')) : 0,
-            'special_start_time'         => $allow_special ? $special_start : null,
-            'special_end_time'           => $allow_special ? $special_end : null,
-            'slot_interval_minutes'          => max(15, (int) ($this->input->post('slot_interval_minutes') ?: 60)),
-            'booking_buffer_before_minutes' => max(0, (int) ($this->input->post('booking_buffer_before_minutes') ?: 0)),
-            'booking_buffer_minutes'         => max(0, (int) ($this->input->post('booking_buffer_minutes') ?: 0)),
-            'requires_priest'                => $this->input->post('requires_priest') ? 1 : 0,
-            'min_advance_days'               => $min_days,
-            'max_advance_days'           => $max_days,
-            'requires_approval_workflow' => $this->input->post('requires_approval_workflow') ? 1 : 0,
-            'is_active'                  => $this->input->post('is_active') ? 1 : 0,
-        ]);
+        // These fields were added by the booking resource-protection upgrade.
+        // Do not report a false "saved" state when the production database has
+        // not yet been migrated.
+        foreach (['booking_buffer_before_minutes', 'booking_buffer_minutes', 'requires_priest'] as $column) {
+            if (!$this->db->field_exists($column, 'service_types')) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'The booking-protection database upgrade is not installed yet. Run database/migrations/20260924_booking_resource_protection.sql in phpMyAdmin, then save again.'
+                ]);
+            }
+        }
+
+        $buffer_before = is_numeric($this->input->post('booking_buffer_before_minutes'))
+            ? max(0, (int) $this->input->post('booking_buffer_before_minutes'))
+            : 0;
+        $buffer_after = is_numeric($this->input->post('booking_buffer_minutes'))
+            ? max(0, (int) $this->input->post('booking_buffer_minutes'))
+            : 0;
+
+        $payload = [
+            'name'                          => $this->input->post('name', true),
+            'description'                   => $this->input->post('description', true),
+            'base_fee'                      => $this->input->post('base_fee'),
+            'duration_minutes'              => max(15, (int) ($this->input->post('duration_minutes') ?: 60)),
+            'uses_main_church'              => $this->input->post('uses_main_church') ? 1 : 0,
+            'allow_special_booking'         => $allow_special,
+            'special_fee'                   => is_numeric($this->input->post('special_fee')) ? max(0, (float) $this->input->post('special_fee')) : 0,
+            'special_start_time'            => $allow_special ? $special_start : null,
+            'special_end_time'              => $allow_special ? $special_end : null,
+            'slot_interval_minutes'         => max(15, (int) ($this->input->post('slot_interval_minutes') ?: 60)),
+            'booking_buffer_before_minutes' => $buffer_before,
+            'booking_buffer_minutes'        => $buffer_after,
+            'requires_priest'               => $this->input->post('requires_priest') ? 1 : 0,
+            'min_advance_days'              => $min_days,
+            'max_advance_days'              => $max_days,
+            'requires_approval_workflow'    => $this->input->post('requires_approval_workflow') ? 1 : 0,
+            'is_active'                     => $this->input->post('is_active') ? 1 : 0,
+        ];
+
+        $service_id = (int) $this->input->post('id');
+        $saved = $this->ServiceType_model->update($service_id, $payload);
+
+        if (!$saved) {
+            $db_error = $this->db->error();
+            log_message('error', 'Service settings update failed: ' . ($db_error['message'] ?? 'unknown database error'));
+            return $this->json([
+                'success' => false,
+                'message' => 'The service settings could not be saved. Please verify the database migration and try again.'
+            ]);
+        }
+
+        $persisted = $this->ServiceType_model->get($service_id);
+
+        if ((int) ($persisted['booking_buffer_before_minutes'] ?? -1) !== $buffer_before
+            || (int) ($persisted['booking_buffer_minutes'] ?? -1) !== $buffer_after) {
+            log_message('error', 'Service buffer verification failed after update for service ID ' . $service_id);
+            return $this->json([
+                'success' => false,
+                'message' => 'The protection minutes were not persisted by the database. Run database/migrations/20260924_booking_resource_protection.sql in phpMyAdmin, then try again.'
+            ]);
+        }
 
         $this->log_activity('Updated service type', 'service_type', $this->input->post('name'));
-        $this->json(['success' => true, 'message' => 'Service updated.']);
+        $this->json([
+            'success' => true,
+            'message' => 'Service settings saved.',
+            'data' => [
+                'booking_buffer_before_minutes' => (int) ($persisted['booking_buffer_before_minutes'] ?? 0),
+                'duration_minutes' => (int) ($persisted['duration_minutes'] ?? 0),
+                'booking_buffer_minutes' => (int) ($persisted['booking_buffer_minutes'] ?? 0),
+            ],
+        ]);
     }
 
     public function add_requirement()

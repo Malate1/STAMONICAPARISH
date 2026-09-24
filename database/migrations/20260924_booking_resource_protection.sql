@@ -6,6 +6,20 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Make this migration safe even if the previous availability migration
+-- was only partially applied on shared hosting.
+SET @sql = IF(
+  EXISTS(
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'service_types'
+      AND COLUMN_NAME = 'slot_interval_minutes'
+  ),
+  'SELECT 1',
+  'ALTER TABLE service_types ADD COLUMN slot_interval_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 60'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @sql = IF(
   EXISTS(
     SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
@@ -14,7 +28,19 @@ SET @sql = IF(
       AND COLUMN_NAME = 'booking_buffer_before_minutes'
   ),
   'SELECT 1',
-  'ALTER TABLE service_types ADD COLUMN booking_buffer_before_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER slot_interval_minutes'
+  'ALTER TABLE service_types ADD COLUMN booking_buffer_before_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+  EXISTS(
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'service_types'
+      AND COLUMN_NAME = 'booking_buffer_minutes'
+  ),
+  'SELECT 1',
+  'ALTER TABLE service_types ADD COLUMN booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -26,7 +52,7 @@ SET @sql = IF(
       AND COLUMN_NAME = 'requires_priest'
   ),
   'SELECT 1',
-  'ALTER TABLE service_types ADD COLUMN requires_priest BOOLEAN NOT NULL DEFAULT 1 AFTER booking_buffer_minutes'
+  'ALTER TABLE service_types ADD COLUMN requires_priest BOOLEAN NOT NULL DEFAULT 1'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
