@@ -17,20 +17,17 @@ class Record extends Role_Controller
     public function datatable()
     {
         $request = $this->input->post();
-        $this->db->from('sacramental_records');
 
-        if (!empty($request['record_type'])) {
-            $this->db->where('record_type', $request['record_type']);
-        }
-        if (!empty($request['search']['value'])) {
-            $kw = $request['search']['value'];
-            $this->db->group_start()
-                ->like('full_name', $kw)->or_like('father_name', $kw)->or_like('mother_name', $kw)
-                ->group_end();
-        }
+        // DataTables needs an unfiltered total and a filtered total. Do not keep
+        // the Query Builder state after count_all_results(); doing so and then
+        // calling get('sacramental_records') adds the same table a second time
+        // on CI3/MySQL and can produce a 500 "Not unique table/alias" error.
+        $records_total = (int) $this->db->count_all('sacramental_records');
 
-        $total = $this->db->count_all_results('', false);
+        $this->apply_datatable_filters($request);
+        $records_filtered = (int) $this->db->count_all_results('sacramental_records');
 
+        $this->apply_datatable_filters($request);
         $this->db->order_by('id', 'desc');
         if (isset($request['start'], $request['length']) && (int) $request['length'] !== -1) {
             $this->db->limit((int) $request['length'], (int) $request['start']);
@@ -40,18 +37,48 @@ class Record extends Role_Controller
         $data = [];
         foreach ($rows as $r) {
             $data[] = [
-                'type'      => ucfirst($r['record_type']),
-                'full_name' => $r['full_name'],
-                'sacrament_date' => format_date($r['sacrament_date']),
-                'parents'   => trim(($r['father_name'] ?: '') . ' / ' . ($r['mother_name'] ?: ''), ' /'),
-                'registry'  => 'Bk. ' . ($r['registry_book'] ?: '—') . ' Pg. ' . ($r['registry_page'] ?: '—'),
+                'type'      => html_escape(ucfirst($r['record_type'])),
+                'full_name' => html_escape($r['full_name']),
+                'sacrament_date' => !empty($r['sacrament_date']) ? format_date($r['sacrament_date']) : '—',
+                'parents'   => html_escape(trim(($r['father_name'] ?: '') . ' / ' . ($r['mother_name'] ?: ''), ' /') ?: '—'),
+                'registry'  => 'Bk. ' . html_escape($r['registry_book'] ?: '—') . ' Pg. ' . html_escape($r['registry_page'] ?: '—'),
                 'actions'   => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
                     . dt_icon_button('ph-pencil-simple', 'Edit sacramental record', 'editRecord(' . (int) $r['id'] . ')')
                     . '</div>',
             ];
         }
 
-        $this->json(['draw' => (int) ($request['draw'] ?? 1), 'recordsTotal' => $total, 'recordsFiltered' => $total, 'data' => $data]);
+        $this->json([
+            'draw' => (int) ($request['draw'] ?? 1),
+            'recordsTotal' => $records_total,
+            'recordsFiltered' => $records_filtered,
+            'data' => $data
+        ]);
+    }
+
+    private function apply_datatable_filters(array $request)
+    {
+        $allowed_types = ['baptism', 'confirmation', 'communion', 'marriage', 'funeral'];
+
+        if (!empty($request['record_type']) && in_array($request['record_type'], $allowed_types, true)) {
+            $this->db->where('record_type', $request['record_type']);
+        }
+
+        if (!empty($request['search']['value'])) {
+            $kw = trim((string) $request['search']['value']);
+            if ($kw !== '') {
+                $this->db->group_start()
+                    ->like('full_name', $kw)
+                    ->or_like('father_name', $kw)
+                    ->or_like('mother_name', $kw)
+                    ->or_like('spouse_name', $kw)
+                    ->or_like('minister_name', $kw)
+                    ->or_like('registry_book', $kw)
+                    ->or_like('registry_page', $kw)
+                    ->or_like('registry_entry_no', $kw)
+                    ->group_end();
+            }
+        }
     }
 
     public function get($id)

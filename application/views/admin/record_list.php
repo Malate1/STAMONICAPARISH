@@ -95,7 +95,15 @@ $(function(){
   document.getElementById('rec-modal').querySelector('.relative').addEventListener('click', function(e){ e.stopPropagation(); });
   table = $('#rec-table').DataTable({
     processing: true, serverSide: true,
-    ajax: { url: '<?= site_url('/') ?>' + base + '/record/datatable', type: 'POST', data: function(d){ d.record_type = $('#filter-type').val(); } },
+    ajax: {
+      url: '<?= site_url('/') ?>' + base + '/record/datatable',
+      type: 'POST',
+      data: function(d){ d.record_type = $('#filter-type').val(); },
+      error: function(xhr){
+        console.error('Sacramental records DataTable error:', xhr.status, xhr.responseText);
+        toastr.error('Could not load sacramental records. Please reload the page or contact the administrator.');
+      }
+    },
     columns: [
       { data: 'type' }, { data: 'full_name' }, { data: 'sacrament_date' }, { data: 'parents' },
       { data: 'registry' }, { data: 'actions', orderable: false, searchable: false }
