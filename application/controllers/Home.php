@@ -6,7 +6,7 @@ class Home extends Public_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['MassSchedule_model', 'Announcement_model', 'Event_model', 'Ministry_model', 'ServiceType_model', 'Certificate_model', 'Project_model']);
+        $this->load->model(['MassSchedule_model', 'Announcement_model', 'Event_model', 'Ministry_model', 'ServiceType_model', 'Certificate_model', 'Project_model', 'Community_model']);
     }
 
     public function index()
@@ -20,6 +20,7 @@ class Home extends Public_Controller
         $data['service_types']   = $this->ServiceType_model->all_active();
         $data['priests']         = $this->User_model->priests(3);
         $data['projects']        = $this->Project_model->active(3);
+        $data['chapels']         = $this->Community_model->schema_ready() ? array_slice($this->Community_model->chapels(true), 0, 3) : [];
         $this->render_public('public/home', $data);
     }
 
@@ -27,6 +28,19 @@ class Home extends Public_Controller
     {
         $data['grid']            = $this->MassSchedule_model->weekly_grid();
         $data['special']         = $this->MassSchedule_model->upcoming_special(10);
+        $data['chapel_schedules'] = [];
+
+        if ($this->Community_model->schema_ready()) {
+            $chapels = $this->Community_model->chapels(true);
+            foreach ($chapels as $chapel) {
+                $schedules = $this->Community_model->chapel_mass_schedules($chapel['id'], true);
+                if ($schedules) {
+                    $chapel['mass_schedules'] = $schedules;
+                    $data['chapel_schedules'][] = $chapel;
+                }
+            }
+        }
+
         $this->render_public('public/mass_schedule', $data);
     }
 
@@ -75,6 +89,50 @@ class Home extends Public_Controller
         $data['item'] = $this->Ministry_model->find_by_slug($slug);
         if (!$data['item']) show_404();
         $this->render_public('public/ministry_detail', $data);
+    }
+
+    public function chapels()
+    {
+        $data['schema_ready'] = $this->Community_model->schema_ready();
+        $data['chapels'] = $data['schema_ready'] ? $this->Community_model->chapels(true) : [];
+
+        if ($data['schema_ready']) {
+            foreach ($data['chapels'] as &$chapel) {
+                $chapel['mass_schedules'] = $this->Community_model->chapel_mass_schedules($chapel['id'], true);
+                $chapel['clusters'] = $this->Community_model->clusters($chapel['id'], true);
+            }
+            unset($chapel);
+        }
+
+        $this->render_public('public/chapels', $data);
+    }
+
+    public function chapel_detail($slug)
+    {
+        if (!$this->Community_model->schema_ready()) show_404();
+
+        $data['item'] = $this->Community_model->chapel_by_slug($slug);
+        if (!$data['item'] || !$data['item']['is_active']) show_404();
+
+        $data['mass_schedules'] = $this->Community_model->chapel_mass_schedules($data['item']['id'], true);
+        $data['officials'] = $this->Community_model->officials('chapel', $data['item']['id'], null, true);
+        $data['clusters'] = $this->Community_model->clusters($data['item']['id'], true);
+        foreach ($data['clusters'] as &$cluster) {
+            $cluster['officials'] = $this->Community_model->officials('cluster', $data['item']['id'], $cluster['id'], true);
+        }
+        unset($cluster);
+
+        $this->render_public('public/chapel_detail', $data);
+    }
+
+    public function parish_organization()
+    {
+        $data['schema_ready'] = $this->Community_model->schema_ready();
+        $data['structure'] = $data['schema_ready']
+            ? $this->Community_model->public_structure()
+            : ['parish_officials'=>[], 'chapels'=>[]];
+        $data['priests'] = $this->User_model->priests();
+        $this->render_public('public/parish_organization', $data);
     }
 
     public function priests()

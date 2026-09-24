@@ -55,6 +55,50 @@ $today_idx = (int) date('w');
   </div>
 </section>
 
+<?php if (!empty($chapel_schedules)): ?>
+<section class="bg-stonewarm-50 border-y border-stonewarm-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+      <div>
+        <div class="heritage-kicker text-gold-600">Beyond the main church</div>
+        <h2 class="text-3xl font-bold text-parish-900 mt-2">Chapel Mass Schedules</h2>
+        <p class="text-gray-600 mt-2 max-w-2xl">Regular Mass schedules published by the parish for chapel communities and their GSK members.</p>
+      </div>
+      <a href="<?= site_url('chapels') ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-parish-700 hover:underline">Browse all chapels <i class="ph ph-arrow-right"></i></a>
+    </div>
+
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+      <?php foreach ($chapel_schedules as $chapel): ?>
+      <article class="rounded-3xl bg-white border border-stonewarm-200 p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-gold-600 font-bold">Chapel</div>
+            <h3 class="text-xl font-bold text-parish-900 mt-1"><?= html_escape($chapel['name']) ?></h3>
+            <?php if ($chapel['barangay']): ?><div class="text-xs text-gray-400 mt-1"><i class="ph ph-map-pin mr-1"></i><?= html_escape($chapel['barangay']) ?></div><?php endif; ?>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-parish-50 text-parish-700 flex items-center justify-center"><i class="ph ph-church"></i></div>
+        </div>
+
+        <div class="mt-5 divide-y divide-stonewarm-100">
+          <?php foreach ($chapel['mass_schedules'] as $m): ?>
+            <div class="py-3 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
+              <div>
+                <div class="text-xs font-semibold text-gray-700"><?= $days[(int)$m['day_of_week']] ?></div>
+                <div class="text-[11px] text-gray-400 mt-0.5"><?= html_escape($m['title']) ?><?= $m['recurrence_note'] ? ' · '.html_escape($m['recurrence_note']) : '' ?></div>
+              </div>
+              <div class="text-sm font-bold text-parish-800 whitespace-nowrap"><?= date('g:i A',strtotime($m['mass_time'])) ?></div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+
+        <a href="<?= site_url('chapels/'.$chapel['slug']) ?>" class="mt-5 pt-4 border-t border-stonewarm-100 flex items-center justify-between text-sm font-semibold text-parish-700">Chapel details <i class="ph ph-arrow-right"></i></a>
+      </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php if (!empty($special)): ?>
 <section class="bg-white border-y border-stonewarm-200">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

@@ -401,6 +401,43 @@ $season_cover = !empty($seasonal_event['cover_image']) ? base_url($seasonal_even
   </div>
 </section>
 
+<?php if (!empty($chapels)): ?>
+<!-- Chapel communities -->
+<section class="bg-stonewarm-50 border-y border-stonewarm-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
+      <div>
+        <div class="heritage-kicker text-gold-600">GSK communities</div>
+        <h2 class="text-3xl sm:text-4xl font-bold text-parish-900 mt-2">Faith lived in our chapel communities.</h2>
+        <p class="text-gray-600 mt-2 max-w-2xl">Find chapel details, regular Mass schedules and the GSK communities that connect parish life with neighborhoods and families.</p>
+      </div>
+      <a href="<?= site_url('chapels') ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-parish-700 hover:underline">Explore all chapels <i class="ph ph-arrow-right"></i></a>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <?php foreach ($chapels as $chapel):
+        $chapel_img = !empty($chapel['cover_image']) ? base_url($chapel['cover_image']) : $hero_img;
+      ?>
+      <a href="<?= site_url('chapels/'.$chapel['slug']) ?>" class="group rounded-3xl overflow-hidden bg-white border border-stonewarm-200 hover:border-parish-200 hover:shadow-heritage transition">
+        <div class="relative h-44 overflow-hidden bg-parish-900">
+          <img src="<?= html_escape($chapel_img) ?>" alt="<?= html_escape($chapel['name']) ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent"></div>
+          <div class="absolute left-4 right-4 bottom-4 text-white">
+            <?php if ($chapel['patron_saint']): ?><div class="text-[10px] uppercase tracking-wider font-bold text-gold-200"><?= html_escape($chapel['patron_saint']) ?></div><?php endif; ?>
+            <div class="font-bold text-lg mt-1"><?= html_escape($chapel['name']) ?></div>
+          </div>
+        </div>
+        <div class="p-5 flex items-center justify-between text-sm">
+          <span class="text-gray-500"><i class="ph ph-map-pin mr-1 text-parish-600"></i><?= html_escape($chapel['barangay'] ?: 'Alburquerque, Bohol') ?></span>
+          <i class="ph ph-arrow-right text-parish-700"></i>
+        </div>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php if (!empty($projects)): ?>
 <!-- Parish Projects -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">

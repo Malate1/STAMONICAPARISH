@@ -25,6 +25,8 @@
           <li><a href="<?= site_url('mass-schedule') ?>" class="hover:text-gold-200 transition">Mass Schedule</a></li>
           <li><a href="<?= site_url('announcements') ?>" class="hover:text-gold-200 transition">Announcements</a></li>
           <li><a href="<?= site_url('events') ?>" class="hover:text-gold-200 transition">Parish Events</a></li>
+          <li><a href="<?= site_url('chapels') ?>" class="hover:text-gold-200 transition">Chapels &amp; GSK</a></li>
+          <li><a href="<?= site_url('parish-organization') ?>" class="hover:text-gold-200 transition">Parish Organization</a></li>
           <li><a href="<?= site_url('projects') ?>" class="hover:text-gold-200 transition">Parish Projects</a></li>
           <li><a href="<?= site_url('priests') ?>" class="hover:text-gold-200 transition">Our Priests</a></li>
           <li><a href="<?= site_url('st-monica') ?>" class="hover:text-gold-200 transition">Life of St. Monica</a></li>

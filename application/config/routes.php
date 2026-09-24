@@ -68,6 +68,9 @@ $route['events']                     = 'home/events';
 $route['events/(:any)']              = 'home/event_detail/$1';
 $route['ministries']                 = 'home/ministries';
 $route['ministries/(:any)']          = 'home/ministry_detail/$1';
+$route['chapels']                     = 'home/chapels';
+$route['chapels/(:any)']              = 'home/chapel_detail/$1';
+$route['parish-organization']         = 'home/parish_organization';
 $route['priests']                    = 'home/priests';
 $route['prayers']                    = 'home/prayers';
 $route['st-monica']                  = 'home/st_monica';
@@ -115,6 +118,18 @@ $route['priest/mass-intentions']      = 'priest/mass_intention';
 $route['priest/mass-intentions/reader'] = 'priest/mass_intention/reader';
 
 // ---- Admin area ----
+$route['admin/community/chapel-get/(:num)']        = 'admin/community/chapel_get/$1';
+$route['admin/community/chapel-store']             = 'admin/community/chapel_store';
+$route['admin/community/chapel-delete/(:num)']     = 'admin/community/chapel_delete/$1';
+$route['admin/community/mass-get/(:num)']          = 'admin/community/mass_get/$1';
+$route['admin/community/mass-store']               = 'admin/community/mass_store';
+$route['admin/community/mass-delete/(:num)']       = 'admin/community/mass_delete/$1';
+$route['admin/community/cluster-get/(:num)']       = 'admin/community/cluster_get/$1';
+$route['admin/community/cluster-store']            = 'admin/community/cluster_store';
+$route['admin/community/cluster-delete/(:num)']    = 'admin/community/cluster_delete/$1';
+$route['admin/community/official-get/(:num)']      = 'admin/community/official_get/$1';
+$route['admin/community/official-store']           = 'admin/community/official_store';
+$route['admin/community/official-delete/(:num)']   = 'admin/community/official_delete/$1';
 $route['admin/project/datatable']                       = 'admin/project/datatable';
 $route['admin/project/get/(:num)']                      = 'admin/project/get/$1';
 $route['admin/project/store']                           = 'admin/project/store';
@@ -136,6 +151,7 @@ $route['admin']                      = 'admin/dashboard';
 $route['admin/(:any)']               = 'admin/$1';
 
 // ---- Secretary area ----
+$route['staff/community']                              = 'admin/community';
 $route['staff/service-config']                         = 'admin/service_type';
 $route['staff/service-config/get/(:num)']             = 'admin/service_type/get/$1';
 $route['staff/service-config/store']                   = 'admin/service_type/store';

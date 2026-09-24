@@ -32,6 +32,7 @@ if (!function_exists('nav_item')) {
       <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', $seg2 === 'record') ?>
       <?php if ($role === ROLE_SECRETARY): ?>
         <?= nav_item(site_url('staff/service-config'), 'ph-calendar-dots', 'Service Availability', $seg2 === 'service-config') ?>
+        <?= nav_item(site_url('staff/community'), 'ph-tree-structure', 'Chapels & GSK', $seg2 === 'community') ?>
       <?php endif; ?>
     <?php endif; ?>
 
@@ -52,6 +53,7 @@ if (!function_exists('nav_item')) {
       <?= nav_item(site_url('admin/mass_schedule'), 'ph-clock', 'Mass Schedule', $seg2 === 'mass_schedule') ?>
       <?= nav_item(site_url('admin/announcement'), 'ph-megaphone', 'Announcements', $seg2 === 'announcement') ?>
       <?= nav_item(site_url('admin/event'), 'ph-calendar-star', 'Events', $seg2 === 'event') ?>
+      <?= nav_item(site_url('admin/community'), 'ph-tree-structure', 'Chapels & GSK', $seg2 === 'community') ?>
       <?= nav_item(site_url('admin/project'), 'ph-folder-open', 'Projects & Giving', $seg2 === 'project') ?>
       <?= nav_item(site_url('admin/ministry'), 'ph-users-three', 'Ministries', $seg2 === 'ministry') ?>
 
@@ -95,7 +97,10 @@ if (!function_exists('nav_item')) {
         <?= nav_item(site_url('priest/mass-intentions'), 'ph-hands-praying', 'Mass Intention Reader', false) ?>
       <?php endif; ?>
       <?php if ($role === ROLE_ADMIN): ?>
+        <?= nav_item(site_url('admin/community'), 'ph-tree-structure', 'Chapels & GSK', false) ?>
         <?= nav_item(site_url('admin/project'), 'ph-folder-open', 'Projects & Giving', false) ?>
+      <?php elseif ($role === ROLE_SECRETARY): ?>
+        <?= nav_item(site_url('staff/community'), 'ph-tree-structure', 'Chapels & GSK', false) ?>
       <?php endif; ?>
       <?= nav_item(site_url('logout'), 'ph-sign-out', 'Logout', false) ?>
     </nav>
