@@ -13,6 +13,7 @@ class Event extends Role_Controller
     public function index()
     {
         $data['seasonal_schema_ready'] = $this->Event_model->seasonal_schema_ready();
+        $data['activity_schema_ready'] = $this->Event_model->activity_schema_ready();
         $data['default_season_year'] = (int) date('Y');
         $this->render_app('admin/event_list', $data, 'layouts/app_admin');
     }
@@ -73,6 +74,9 @@ class Event extends Role_Controller
 
         $item['duration_days'] = $this->Event_model->event_duration_days($item);
         $item['cover_url'] = !empty($item['cover_image']) ? base_url($item['cover_image']) : null;
+        $item['activity_count'] = $this->Event_model->activity_schema_ready()
+            ? count($this->Event_model->activities($id))
+            : 0;
         $this->json(['success' => true, 'data' => $item]);
     }
 
@@ -110,14 +114,165 @@ class Event extends Role_Controller
             return $this->json(['success' => false, 'message' => 'That seasonal template could not be prepared.']);
         }
 
+        $activity_ready = $this->Event_model->activity_schema_ready();
         $this->json([
             'success' => true,
             'id' => $result['id'],
             'created' => $result['created'],
-            'message' => $result['created']
-                ? 'Seasonal event prepared as a draft. Add this year’s photo and exact details, then publish it.'
-                : 'This seasonal event already exists. Opening it for editing.'
+            'message' => !$activity_ready
+                ? 'Seasonal event prepared, but the detailed activity program is not installed yet. Run database/migrations/20260924_event_activities.sql, then click Prepare again to add the editable starter program.'
+                : ($result['created']
+                    ? 'Seasonal event prepared as a draft with editable starter activities. Review the photo, schedules and activity details before publishing.'
+                    : ((int)($result['seeded_activities'] ?? 0) > 0
+                        ? 'This seasonal event already existed; editable starter activities were added because its program was empty.'
+                        : 'This seasonal event already exists. Opening it for editing.'))
         ]);
+    }
+
+    public function activities($event_id)
+    {
+        $event = $this->Event_model->get((int) $event_id);
+        if (!$event) return $this->json(['success' => false, 'message' => 'Event not found.'], 404);
+
+        if (!$this->Event_model->activity_schema_ready()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Event activities are not installed yet. Run database/migrations/20260924_event_activities.sql in phpMyAdmin.'
+            ]);
+        }
+
+        $this->json([
+            'success' => true,
+            'event' => [
+                'id' => (int) $event['id'],
+                'title' => $event['title'],
+                'event_date' => $event['event_date'],
+                'end_date' => $event['end_date'] ?: $event['event_date'],
+            ],
+            'activities' => $this->Event_model->activities($event_id),
+        ]);
+    }
+
+    public function seed_activities($event_id)
+    {
+        $event = $this->Event_model->get((int) $event_id);
+        if (!$event) {
+            return $this->json(['success' => false, 'message' => 'Event not found.'], 404);
+        }
+
+        if (empty($event['is_seasonal']) || empty($event['season_key']) || empty($event['season_year'])) {
+            return $this->json(['success' => false, 'message' => 'Starter programs are available for seasonal events only.']);
+        }
+
+        if (!$this->Event_model->activity_schema_ready()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Run database/migrations/20260924_event_activities.sql in phpMyAdmin first.'
+            ]);
+        }
+
+        if (count($this->Event_model->activities($event_id)) > 0) {
+            return $this->json([
+                'success' => false,
+                'message' => 'This event already has program activities. Add or edit them individually instead of loading the starter program.'
+            ]);
+        }
+
+        $count = $this->Event_model->seed_seasonal_activities(
+            (int) $event_id,
+            $event['season_key'],
+            (int) $event['season_year']
+        );
+
+        $this->json([
+            'success' => true,
+            'message' => $count > 0
+                ? $count . ' editable starter activities were added. Review every date, time and detail before publishing.'
+                : 'No starter activities were added.'
+        ]);
+    }
+
+    public function save_activity()
+    {
+        if (!$this->Event_model->activity_schema_ready()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Run database/migrations/20260924_event_activities.sql in phpMyAdmin before adding event activities.'
+            ]);
+        }
+
+        $id = (int) $this->input->post('id');
+        $event_id = (int) $this->input->post('event_id');
+        $event = $this->Event_model->get($event_id);
+
+        if (!$event) {
+            return $this->json(['success' => false, 'message' => 'Save the event first before adding program activities.'], 404);
+        }
+
+        $title = trim((string) $this->input->post('title', true));
+        $date = $this->input->post('activity_date', true);
+        $end_date = $this->input->post('activity_end_date', true) ?: null;
+        $start_time = $this->input->post('start_time', true) ?: null;
+        $end_time = $this->input->post('end_time', true) ?: null;
+
+        if ($title === '' || !$date) {
+            return $this->json(['success' => false, 'message' => 'Activity title and date are required.']);
+        }
+
+        if ($end_date && strtotime($end_date) < strtotime($date)) {
+            return $this->json(['success' => false, 'message' => 'Activity end date cannot be earlier than its start date.']);
+        }
+
+        if ($start_time && $end_time && (!$end_date || $end_date === $date) && strtotime($date . ' ' . $end_time) <= strtotime($date . ' ' . $start_time)) {
+            return $this->json(['success' => false, 'message' => 'Activity end time must be later than the start time.']);
+        }
+
+        $existing = $id ? $this->Event_model->get_activity($id) : null;
+        if ($id && (!$existing || (int) $existing['event_id'] !== $event_id)) {
+            return $this->json(['success' => false, 'message' => 'Activity not found for this event.'], 404);
+        }
+
+        $payload = [
+            'event_id' => $event_id,
+            'activity_type' => trim((string) $this->input->post('activity_type', true)) ?: 'activity',
+            'title' => $title,
+            'description' => $this->input->post('description', true) ?: null,
+            'activity_date' => $date,
+            'activity_end_date' => $end_date,
+            'start_time' => $start_time,
+            'end_time' => $end_time,
+            'location' => $this->input->post('location', true) ?: $event['location'],
+            'is_featured' => $this->input->post('is_featured') ? 1 : 0,
+            'sort_order' => max(0, (int) ($this->input->post('sort_order') ?: 0)),
+        ];
+
+        $saved = $this->Event_model->save_activity($id, $payload);
+        if (!$saved) {
+            return $this->json(['success' => false, 'message' => 'The program activity could not be saved.']);
+        }
+
+        $this->json([
+            'success' => true,
+            'message' => $id ? 'Program activity updated.' : 'Program activity added.',
+        ]);
+    }
+
+    public function delete_activity($id)
+    {
+        if (!$this->Event_model->activity_schema_ready()) {
+            return $this->json(['success' => false, 'message' => 'Event activities are not installed.']);
+        }
+
+        $activity = $this->Event_model->get_activity((int) $id);
+        if (!$activity) {
+            return $this->json(['success' => false, 'message' => 'Program activity not found.'], 404);
+        }
+
+        if ($this->Event_model->delete_activity((int) $id)) {
+            return $this->json(['success' => true, 'message' => 'Program activity removed.']);
+        }
+
+        $this->json(['success' => false, 'message' => 'Program activity could not be removed.']);
     }
 
     public function store()
@@ -194,7 +349,7 @@ class Event extends Role_Controller
             if (!$id) {
                 return $this->json(['success' => false, 'message' => 'The event could not be created.']);
             }
-            $msg = 'Event published.';
+            $msg = 'Event created.';
         }
 
         $saved = $this->Event_model->get($id);

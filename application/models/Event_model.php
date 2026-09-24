@@ -53,6 +53,48 @@ class Event_model extends CI_Model
             ->count_all_results('event_registrations');
     }
 
+    public function activity_schema_ready()
+    {
+        return $this->db->table_exists('event_activities');
+    }
+
+    public function activities($event_id)
+    {
+        if (!$this->activity_schema_ready()) return [];
+
+        return $this->db->where('event_id', (int) $event_id)
+            ->order_by('activity_date', 'asc')
+            ->order_by('CASE WHEN start_time IS NULL THEN 1 ELSE 0 END', '', false)
+            ->order_by('start_time', 'asc')
+            ->order_by('sort_order', 'asc')
+            ->order_by('id', 'asc')
+            ->get('event_activities')->result_array();
+    }
+
+    public function get_activity($id)
+    {
+        if (!$this->activity_schema_ready()) return null;
+        return $this->db->get_where('event_activities', ['id' => (int) $id])->row_array();
+    }
+
+    public function save_activity($id, array $data)
+    {
+        if (!$this->activity_schema_ready()) return false;
+
+        if ($id) {
+            return $this->db->where('id', (int) $id)->update('event_activities', $data);
+        }
+
+        $this->db->insert('event_activities', $data);
+        return $this->db->insert_id();
+    }
+
+    public function delete_activity($id)
+    {
+        if (!$this->activity_schema_ready()) return false;
+        return $this->db->where('id', (int) $id)->delete('event_activities');
+    }
+
     public function seasonal_schema_ready()
     {
         foreach (['season_key', 'season_year', 'is_seasonal', 'highlight_on_home', 'highlight_start', 'highlight_end'] as $column) {
@@ -160,6 +202,94 @@ class Event_model extends CI_Model
         ];
     }
 
+    /**
+     * Editable starter program items for each seasonal event. These are copied
+     * into event_activities only when staff prepares that year's event. The
+     * public site reads the database rows, so staff can freely add, edit,
+     * reorder or remove activities without changing code.
+     */
+    public function seasonal_activity_templates($key, $year)
+    {
+        $year = max(2000, min(2100, (int) $year));
+        $easter = $this->gregorian_easter($year);
+        $ash = $easter->modify('-46 days');
+        $palm = $easter->modify('-7 days');
+        $holy_thursday = $easter->modify('-3 days');
+        $good_friday = $easter->modify('-2 days');
+        $holy_saturday = $easter->modify('-1 day');
+
+        $templates = [
+            'lent' => [
+                ['type'=>'mass','title'=>'Ash Wednesday Masses','date'=>$ash->format('Y-m-d'),'description'=>'Add the parish Mass times and distribution of ashes for this year.','featured'=>1],
+                ['type'=>'devotion','title'=>'Stations of the Cross','date'=>$ash->modify('+2 days')->format('Y-m-d'),'end'=>$good_friday->format('Y-m-d'),'description'=>'Set the parish Friday schedule, chapel assignments or procession details for the Stations of the Cross.'],
+                ['type'=>'confession','title'=>'Lenten Confession / Kumpisal','date'=>$palm->modify('-7 days')->format('Y-m-d'),'description'=>'Add the actual parish penitential service or confession schedule.'],
+                ['type'=>'mass','title'=>'Palm Sunday Masses','date'=>$palm->format('Y-m-d'),'description'=>'Add blessing of palms, procession and Mass schedules.','featured'=>1],
+                ['type'=>'liturgy','title'=>'Mass of the Lord’s Supper','date'=>$holy_thursday->format('Y-m-d'),'description'=>'Add the Holy Thursday Mass, washing of feet and Altar of Repose schedule.','featured'=>1],
+                ['type'=>'liturgy','title'=>'Good Friday Liturgy','date'=>$good_friday->format('Y-m-d'),'description'=>'Add the Passion service, veneration of the Cross, procession and related parish activities.','featured'=>1],
+                ['type'=>'mass','title'=>'Easter Vigil','date'=>$holy_saturday->format('Y-m-d'),'description'=>'Add the parish Easter Vigil time and preparation details.','featured'=>1],
+                ['type'=>'mass','title'=>'Easter Sunday Masses','date'=>$easter->format('Y-m-d'),'description'=>'Add all Easter Sunday Mass schedules.','featured'=>1],
+            ],
+            'fiesta' => [
+                ['type'=>'novena','title'=>'Novena Masses to Sta. Monica','date'=>sprintf('%04d-08-18',$year),'end'=>sprintf('%04d-08-26',$year),'description'=>'Nine-day novena preparation. Add the daily Mass time, sponsoring chapel/ministry and celebrant details.','featured'=>1],
+                ['type'=>'mass','title'=>'Parish Fiesta Mass','date'=>sprintf('%04d-08-27',$year),'description'=>'Add the principal fiesta Mass time, main celebrant, concelebrants and liturgical notes.','featured'=>1],
+                ['type'=>'procession','title'=>'Procession in Honor of Sta. Monica','date'=>sprintf('%04d-08-27',$year),'description'=>'Add the procession route, assembly time and participating chapels or ministries.'],
+                ['type'=>'fellowship','title'=>'Community Dinner by Chapel Groups','date'=>sprintf('%04d-08-27',$year),'description'=>'Parish fellowship meal where families gather with their respective chapel/community members. Add the venue, meal time and chapel assignments.','featured'=>1],
+                ['type'=>'program','title'=>'Parish Fiesta Program & Live Band','date'=>sprintf('%04d-08-27',$year),'description'=>'Add the community program, presentations, live band or cultural entertainment, venue and start time.','featured'=>1],
+            ],
+            'rosary_month' => [
+                ['type'=>'devotion','title'=>'Opening Rosary for October','date'=>sprintf('%04d-10-01',$year),'description'=>'Add the opening Marian prayer or community rosary schedule.','featured'=>1],
+                ['type'=>'devotion','title'=>'Daily / Chapel Rosary Schedule','date'=>sprintf('%04d-10-01',$year),'end'=>sprintf('%04d-10-31',$year),'description'=>'Add chapel rotations, family rosary assignments or parish rosary schedules for the month.'],
+                ['type'=>'procession','title'=>'Living Rosary / Marian Procession','date'=>sprintf('%04d-10-31',$year),'description'=>'Add the parish closing Rosary Month activity, procession or Living Rosary details.','featured'=>1],
+            ],
+            'undas' => [
+                ['type'=>'mass','title'=>'All Saints’ Day Mass','date'=>sprintf('%04d-11-01',$year),'description'=>'Add the parish All Saints’ Day Mass schedule.','featured'=>1],
+                ['type'=>'prayer','title'=>'Cemetery Prayer & Blessing','date'=>sprintf('%04d-11-01',$year),'description'=>'Add cemetery prayer, grave blessing, assembly point and priest schedule if offered.'],
+                ['type'=>'mass','title'=>'All Souls’ Day Masses','date'=>sprintf('%04d-11-02',$year),'description'=>'Add Mass schedules offered for the faithful departed and instructions for intentions.','featured'=>1],
+                ['type'=>'prayer','title'=>'Memorial Prayer for the Faithful Departed','date'=>sprintf('%04d-11-02',$year),'description'=>'Add any parish memorial service, candle-lighting or remembrance activity.'],
+            ],
+            'christmas' => [
+                ['type'=>'mass','title'=>'Simbang Gabi — 9-Day Novena Masses','date'=>sprintf('%04d-12-16',$year),'end'=>sprintf('%04d-12-24',$year),'description'=>'Nine-day Simbang Gabi/Misa de Gallo. Add the daily Mass time, sponsoring chapel/ministry, choir assignments and celebrants.','featured'=>1],
+                ['type'=>'fellowship','title'=>'Post-Simbang Gabi Fellowship','date'=>sprintf('%04d-12-16',$year),'end'=>sprintf('%04d-12-24',$year),'description'=>'Optional parish or chapel fellowship after selected Simbang Gabi Masses. Edit or remove if not part of this year’s program.'],
+                ['type'=>'program','title'=>'Parish Christmas Program','date'=>sprintf('%04d-12-23',$year),'description'=>'Add Christmas presentations, choir program, children’s activities or community fellowship if scheduled.'],
+                ['type'=>'mass','title'=>'Christmas Eve Mass','date'=>sprintf('%04d-12-24',$year),'description'=>'Add the Christmas Eve / Midnight Mass schedule and any pre-Mass program.','featured'=>1],
+                ['type'=>'mass','title'=>'Christmas Day Masses','date'=>sprintf('%04d-12-25',$year),'description'=>'Add all Christmas Day Mass schedules.','featured'=>1],
+            ],
+            'new_year' => [
+                ['type'=>'mass','title'=>'Year-End Thanksgiving Mass','date'=>sprintf('%04d-12-31',$year),'description'=>'Add the parish year-end thanksgiving Mass schedule.','featured'=>1],
+                ['type'=>'prayer','title'=>'New Year Prayer / Vigil','date'=>sprintf('%04d-12-31',$year),'description'=>'Add any prayer vigil, adoration or community thanksgiving activity before the New Year.'],
+                ['type'=>'mass','title'=>'Solemnity of Mary / New Year’s Day Masses','date'=>sprintf('%04d-01-01',$year + 1),'description'=>'Add January 1 Mass schedules for the Solemnity of Mary, Mother of God.','featured'=>1],
+            ],
+        ];
+
+        return $templates[$key] ?? [];
+    }
+
+    public function seed_seasonal_activities($event_id, $key, $year)
+    {
+        if (!$this->activity_schema_ready()) return 0;
+        if ($this->db->where('event_id', (int) $event_id)->count_all_results('event_activities') > 0) return 0;
+
+        $rows = $this->seasonal_activity_templates($key, $year);
+        $inserted = 0;
+        foreach ($rows as $index => $row) {
+            $this->db->insert('event_activities', [
+                'event_id' => (int) $event_id,
+                'activity_type' => $row['type'] ?? 'activity',
+                'title' => $row['title'],
+                'description' => $row['description'] ?? null,
+                'activity_date' => $row['date'],
+                'activity_end_date' => $row['end'] ?? null,
+                'start_time' => $row['start_time'] ?? null,
+                'end_time' => $row['end_time'] ?? null,
+                'location' => $row['location'] ?? 'Sta. Monica Parish Church',
+                'is_featured' => !empty($row['featured']) ? 1 : 0,
+                'sort_order' => ($index + 1) * 10,
+            ]);
+            if ($this->db->affected_rows() > 0) $inserted++;
+        }
+        return $inserted;
+    }
+
     public function seasonal_instances($year)
     {
         if (!$this->seasonal_schema_ready()) return [];
@@ -203,7 +333,8 @@ class Event_model extends CI_Model
         ])->row_array();
 
         if ($existing) {
-            return ['id' => (int) $existing['id'], 'created' => false];
+            $seeded = $this->seed_seasonal_activities((int) $existing['id'], $key, $year);
+            return ['id' => (int) $existing['id'], 'created' => false, 'seeded_activities' => $seeded];
         }
 
         $t = $templates[$key];
@@ -231,7 +362,10 @@ class Event_model extends CI_Model
             'created_by' => (int) $created_by,
         ]);
 
-        return $id ? ['id' => (int) $id, 'created' => true] : false;
+        if (!$id) return false;
+
+        $seeded = $this->seed_seasonal_activities((int) $id, $key, $year);
+        return ['id' => (int) $id, 'created' => true, 'seeded_activities' => $seeded];
     }
 
     public function active_seasonal_highlight()

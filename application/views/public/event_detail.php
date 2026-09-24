@@ -3,6 +3,22 @@ $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Ch
 $event_cover = !empty($item['cover_image']) ? base_url($item['cover_image']) : $hero_img;
 $event_end = !empty($item['end_date']) ? $item['end_date'] : $item['event_date'];
 $duration_days = max(1, (int)((strtotime($event_end) - strtotime($item['event_date'])) / 86400) + 1);
+
+$activity_type_meta = [
+    'mass'       => ['Mass', 'ph-church'],
+    'novena'     => ['Novena', 'ph-hands-praying'],
+    'devotion'   => ['Devotion', 'ph-hands-praying'],
+    'prayer'     => ['Prayer', 'ph-hands-praying'],
+    'liturgy'    => ['Liturgy', 'ph-cross'],
+    'confession' => ['Confession', 'ph-cross'],
+    'procession' => ['Procession', 'ph-path'],
+    'fellowship' => ['Fellowship', 'ph-users-three'],
+    'program'    => ['Program', 'ph-microphone-stage'],
+    'music'      => ['Music', 'ph-music-notes'],
+    'outreach'   => ['Outreach', 'ph-hand-heart'],
+    'meeting'    => ['Meeting', 'ph-users'],
+    'activity'   => ['Activity', 'ph-calendar-check'],
+];
 ?>
 <article>
   <section class="relative overflow-hidden bg-parish-900 min-h-[340px] flex items-end">
@@ -50,6 +66,72 @@ $duration_days = max(1, (int)((strtotime($event_end) - strtotime($item['event_da
         </div>
       </aside>
     </div>
+
+    <?php if (!empty($activities)): ?>
+    <section class="mt-8 rounded-[2rem] bg-white border border-stonewarm-200 p-7 sm:p-10 shadow-soft">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <div class="heritage-kicker text-gold-600">Parish program</div>
+          <h2 class="text-2xl sm:text-3xl font-bold text-parish-900 mt-2">Masses, activities & community gatherings</h2>
+          <p class="text-gray-600 mt-2 max-w-2xl">This schedule is prepared by the parish for this year’s celebration. Times and activities may be updated by the parish office.</p>
+        </div>
+        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-parish-50 text-parish-700 text-xs font-semibold self-start">
+          <i class="ph ph-list-checks"></i> <?= count($activities) ?> program item<?= count($activities) === 1 ? '' : 's' ?>
+        </div>
+      </div>
+
+      <div class="mt-8 relative">
+        <div class="absolute left-[19px] top-4 bottom-4 w-px bg-stonewarm-200 hidden sm:block"></div>
+
+        <div class="space-y-4">
+          <?php foreach ($activities as $activity):
+            $meta = $activity_type_meta[$activity['activity_type']] ?? [ucwords(str_replace('_',' ', $activity['activity_type'] ?: 'Activity')), 'ph-calendar-check'];
+            $a_end = !empty($activity['activity_end_date']) ? $activity['activity_end_date'] : $activity['activity_date'];
+            $a_days = max(1, (int)((strtotime($a_end) - strtotime($activity['activity_date'])) / 86400) + 1);
+          ?>
+          <article class="relative sm:pl-14">
+            <div class="hidden sm:flex absolute left-0 top-4 w-10 h-10 rounded-full bg-white border border-stonewarm-200 shadow-sm items-center justify-center text-parish-700 z-10">
+              <i class="ph <?= html_escape($meta[1]) ?>"></i>
+            </div>
+
+            <div class="rounded-2xl border <?= !empty($activity['is_featured']) ? 'border-gold-200 bg-gold-50/35' : 'border-stonewarm-200 bg-stonewarm-50/35' ?> p-5 sm:p-6">
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-stonewarm-200 text-[10px] uppercase tracking-wider font-bold text-parish-700">
+                      <i class="ph <?= html_escape($meta[1]) ?>"></i> <?= html_escape($meta[0]) ?>
+                    </span>
+                    <?php if (!empty($activity['is_featured'])): ?>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold-100 text-gold-700 text-[10px] uppercase tracking-wider font-bold"><i class="ph ph-star"></i> Featured</span>
+                    <?php endif; ?>
+                  </div>
+
+                  <h3 class="text-lg sm:text-xl font-bold text-gray-900 mt-3"><?= html_escape($activity['title']) ?></h3>
+
+                  <?php if (!empty($activity['description'])): ?>
+                    <p class="text-sm text-gray-600 leading-relaxed mt-2 whitespace-pre-line"><?= nl2br(html_escape($activity['description'])) ?></p>
+                  <?php endif; ?>
+                </div>
+
+                <div class="lg:min-w-[220px] text-sm text-gray-600 space-y-2">
+                  <div class="flex gap-2"><i class="ph ph-calendar-blank text-parish-700 mt-0.5"></i><span><strong class="text-gray-800"><?= format_date($activity['activity_date']) ?></strong><?php if ($a_end !== $activity['activity_date']): ?> – <?= format_date($a_end) ?><?php endif; ?><?php if ($a_days > 1): ?><span class="block text-[11px] text-gray-400 mt-0.5"><?= $a_days ?> days</span><?php endif; ?></span></div>
+
+                  <?php if (!empty($activity['start_time'])): ?>
+                    <div class="flex gap-2"><i class="ph ph-clock text-parish-700 mt-0.5"></i><span><?= date('g:i A', strtotime($activity['start_time'])) ?><?php if (!empty($activity['end_time'])): ?> – <?= date('g:i A', strtotime($activity['end_time'])) ?><?php endif; ?></span></div>
+                  <?php endif; ?>
+
+                  <?php if (!empty($activity['location'])): ?>
+                    <div class="flex gap-2"><i class="ph ph-map-pin text-parish-700 mt-0.5"></i><span><?= html_escape($activity['location']) ?></span></div>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </article>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </section>
+    <?php endif; ?>
 
     <?php if ($item['allow_registration']): ?>
     <div class="mt-8 rounded-[2rem] bg-parish-900 text-white p-7 sm:p-9" x-data="{ submitting: false }">

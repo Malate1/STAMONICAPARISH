@@ -59,6 +59,7 @@ class Home extends Public_Controller
         $data['item'] = $this->Event_model->find_by_slug($slug);
         if (!$data['item']) show_404();
         $data['registration_count'] = $this->Event_model->registration_count($data['item']['id']);
+        $data['activities'] = $this->Event_model->activities($data['item']['id']);
         $this->render_public('public/event_detail', $data);
     }
 

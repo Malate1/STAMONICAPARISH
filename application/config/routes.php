@@ -112,6 +112,10 @@ $route['priest/mass-intentions/reader'] = 'priest/mass_intention/reader';
 // ---- Admin area ----
 $route['admin/event/seasonal-templates']                  = 'admin/event/seasonal_templates';
 $route['admin/event/prepare-seasonal']                    = 'admin/event/prepare_seasonal';
+$route['admin/event/activities/(:num)']                = 'admin/event/activities/$1';
+$route['admin/event/activities/seed/(:num)']           = 'admin/event/seed_activities/$1';
+$route['admin/event/activity/save']                    = 'admin/event/save_activity';
+$route['admin/event/activity/delete/(:num)']           = 'admin/event/delete_activity/$1';
 $route['admin/users/reset-password/(:num)']              = 'admin/users/reset_password/$1';
 $route['admin/service_type/get/(:num)']                    = 'admin/service_type/get/$1';
 $route['admin/service_type/store']                         = 'admin/service_type/store';

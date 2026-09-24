@@ -47,6 +47,17 @@ $season_year_max = (int)$default_season_year + 4;
       </div>
     </div>
   <?php else: ?>
+    <?php if (!$activity_schema_ready): ?>
+      <div class="mx-5 sm:mx-6 mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+        <div class="flex gap-3">
+          <i class="ph ph-list-checks text-xl text-amber-700 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-amber-900 text-sm">Event program/activity upgrade required</div>
+            <p class="text-xs text-amber-800/80 mt-1">Run <code class="font-mono">database/migrations/20260924_event_activities.sql</code> in phpMyAdmin to add editable Masses, novenas, meals, processions, programs and other yearly activities.</p>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
     <div class="p-5 sm:p-6">
       <div class="rounded-xl bg-blue-50/60 border border-blue-100 p-4 mb-5">
         <div class="flex gap-3">
@@ -127,9 +138,9 @@ $season_year_max = (int)$default_season_year + 4;
             </div>
 
             <div>
-              <label class="text-xs font-medium text-gray-500">Description / Schedule Details</label>
-              <textarea name="description" id="f-desc" rows="6" placeholder="Add this year's Mass schedules, processions, prayer activities, instructions and important reminders…" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm leading-relaxed focus:border-parish-300 focus:ring-2 focus:ring-parish-100 outline-none"></textarea>
-              <p class="text-[11px] text-gray-400 mt-1">For seasonal events, include the actual schedule and visitor information for that specific year.</p>
+              <label class="text-xs font-medium text-gray-500">Event Overview / Visitor Information</label>
+              <textarea name="description" id="f-desc" rows="5" placeholder="Describe this year's celebration, theme, visitor reminders and general parish information…" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm leading-relaxed focus:border-parish-300 focus:ring-2 focus:ring-parish-100 outline-none"></textarea>
+              <p class="text-[11px] text-gray-400 mt-1">Put individual Masses, novenas, community meals, programs, processions and schedules in <strong>Program & Activities</strong> below so visitors see them as an organized timeline.</p>
             </div>
 
             <div class="grid sm:grid-cols-2 gap-4">
@@ -192,6 +203,30 @@ $season_year_max = (int)$default_season_year + 4;
               <p class="text-[10px] text-gray-400 mt-1">Optional; detailed multi-day schedules belong in Description.</p>
             </div>
           </div>
+        </section>
+
+        <section class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <i class="ph ph-list-checks text-parish-700"></i> Program & Activities
+              </div>
+              <p class="text-xs text-gray-400 mt-1 max-w-2xl">Build this year's actual program from editable items such as Masses, novena days, procession, community dinner, live-band program, prayer services or chapel activities. Nothing here is fixed on the public page.</p>
+            </div>
+            <button type="button" id="add-activity-btn" onclick="openActivityModal()" class="hidden inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-parish-50 hover:bg-parish-100 text-parish-700 text-xs font-semibold">
+              <i class="ph ph-plus"></i> Add Activity
+            </button>
+          </div>
+
+          <div id="activities-unsaved-note" class="mt-4 rounded-xl bg-gray-50 border border-gray-100 p-4 text-xs text-gray-500">
+            Save the event first, then reopen it to add its detailed program.
+          </div>
+
+          <div id="activities-migration-note" class="hidden mt-4 rounded-xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800">
+            Run <code class="font-mono">database/migrations/20260924_event_activities.sql</code> to enable editable program activities.
+          </div>
+
+          <div id="activities-list" class="hidden mt-4 space-y-2"></div>
         </section>
 
         <section id="homepage-highlight-section" class="rounded-2xl border border-parish-100 bg-parish-50/50 p-4 sm:p-5">
@@ -257,9 +292,107 @@ $season_year_max = (int)$default_season_year + 4;
   </div>
 </div>
 
+<div id="activity-modal" class="hidden fixed inset-0 z-[60] items-center justify-center p-3 sm:p-5">
+  <div class="absolute inset-0 bg-black/60" onclick="closeActivityModal()"></div>
+  <div class="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div class="flex-shrink-0 px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <div class="text-[10px] uppercase tracking-[.17em] text-gold-600 font-bold">Event program</div>
+        <h3 id="activity-modal-title" class="font-semibold text-gray-900 text-lg mt-0.5">Add Activity</h3>
+      </div>
+      <button type="button" onclick="closeActivityModal()" class="w-9 h-9 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center"><i class="ph ph-x text-xl"></i></button>
+    </div>
+
+    <form id="activity-form" class="flex-1 min-h-0 flex flex-col">
+      <div class="overflow-y-auto p-5 sm:p-6 space-y-4">
+        <input type="hidden" name="id" id="a-id">
+        <input type="hidden" name="event_id" id="a-event-id">
+
+        <div class="grid sm:grid-cols-[.72fr_1.28fr] gap-4">
+          <div>
+            <label class="text-xs font-medium text-gray-500">Activity Type</label>
+            <input list="activity-type-options" name="activity_type" id="a-type" value="activity" placeholder="e.g. Mass" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+            <datalist id="activity-type-options">
+              <option value="mass">
+              <option value="novena">
+              <option value="devotion">
+              <option value="prayer">
+              <option value="liturgy">
+              <option value="confession">
+              <option value="procession">
+              <option value="fellowship">
+              <option value="program">
+              <option value="music">
+              <option value="outreach">
+              <option value="meeting">
+              <option value="activity">
+            </datalist>
+            <p class="text-[10px] text-gray-400 mt-1">You may type your own category.</p>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500">Activity Title</label>
+            <input required name="title" id="a-title" placeholder="e.g. Parish Fiesta Mass" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-500">Details</label>
+          <textarea name="description" id="a-description" rows="4" placeholder="Celebrant, chapel assignment, meal instructions, procession route, band/program notes, etc." class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm leading-relaxed"></textarea>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-medium text-gray-500">Start Date</label>
+            <input required type="date" name="activity_date" id="a-date" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500">End Date <span class="text-gray-300">(optional)</span></label>
+            <input type="date" name="activity_end_date" id="a-end-date" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-medium text-gray-500">Start Time <span class="text-gray-300">(optional)</span></label>
+            <input type="time" name="start_time" id="a-start-time" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500">End Time <span class="text-gray-300">(optional)</span></label>
+            <input type="time" name="end_time" id="a-end-time" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-[1fr_.38fr] gap-4">
+          <div>
+            <label class="text-xs font-medium text-gray-500">Location</label>
+            <input name="location" id="a-location" placeholder="Church, parish grounds, chapel, plaza…" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500">Order</label>
+            <input type="number" min="0" name="sort_order" id="a-sort-order" value="0" class="mt-1.5 w-full px-4 py-3 rounded-xl border border-gray-200 text-sm">
+          </div>
+        </div>
+
+        <label class="flex items-start gap-2 rounded-xl bg-gold-50/60 border border-gold-100 p-3 text-sm text-gray-700">
+          <input type="checkbox" name="is_featured" id="a-featured" value="1" class="mt-0.5 rounded border-gray-300 text-parish-700">
+          <span><strong class="block text-gray-800">Featured activity</strong><span class="text-xs text-gray-500">Give important items such as the Fiesta Mass, Simbang Gabi or community dinner stronger emphasis on the public timeline.</span></span>
+        </label>
+      </div>
+
+      <div class="flex-shrink-0 px-5 sm:px-6 py-4 bg-white border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+        <button type="button" onclick="closeActivityModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600">Cancel</button>
+        <button type="submit" id="activity-save-btn" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-parish-700 hover:bg-parish-800 text-white text-sm font-semibold"><i class="ph ph-floppy-disk mr-1"></i> Save Activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 var table;
 var seasonalReady = <?= $seasonal_schema_ready ? 'true' : 'false' ?>;
+var activityReady = <?= $activity_schema_ready ? 'true' : 'false' ?>;
+var activityCache = {};
+var currentEventData = null;
 
 function openModal(){
   $('#event-modal').removeClass('hidden').addClass('flex');
@@ -280,6 +413,12 @@ function resetForm(){
   $('#seasonal-editor-note').addClass('hidden');
   $('#cover-preview-img').attr('src','').addClass('hidden');
   $('#cover-placeholder').removeClass('hidden');
+  $('#activities-list').addClass('hidden').empty();
+  $('#add-activity-btn').addClass('hidden');
+  $('#activities-migration-note').addClass('hidden');
+  $('#activities-unsaved-note').removeClass('hidden');
+  activityCache = {};
+  currentEventData = null;
   updateDuration();
 }
 
@@ -315,6 +454,214 @@ function setCoverPreview(url){
   }
 }
 
+function activityTypeMeta(type){
+  var map = {
+    mass:['ph-church','Mass'],
+    novena:['ph-hands-praying','Novena'],
+    devotion:['ph-hands-praying','Devotion'],
+    prayer:['ph-hands-praying','Prayer'],
+    liturgy:['ph-cross','Liturgy'],
+    confession:['ph-cross','Confession'],
+    procession:['ph-path','Procession'],
+    fellowship:['ph-users-three','Fellowship'],
+    program:['ph-microphone-stage','Program'],
+    music:['ph-music-notes','Music'],
+    outreach:['ph-hand-heart','Outreach'],
+    meeting:['ph-users','Meeting'],
+    activity:['ph-calendar-check','Activity']
+  };
+  return map[type] || ['ph-calendar-check', String(type || 'Activity').replace(/_/g,' ')];
+}
+
+function formatActivityTime(value){
+  if(!value) return '';
+  var parts = String(value).slice(0,5).split(':');
+  var hour = parseInt(parts[0],10);
+  var minute = parts[1] || '00';
+  var suffix = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return hour + ':' + minute + ' ' + suffix;
+}
+
+function loadActivities(eventId){
+  activityCache = {};
+  $('#activities-unsaved-note').addClass('hidden');
+
+  if(!activityReady){
+    $('#activities-migration-note').removeClass('hidden');
+    $('#activities-list').addClass('hidden').empty();
+    $('#add-activity-btn').addClass('hidden');
+    return;
+  }
+
+  $('#activities-migration-note').addClass('hidden');
+  $('#add-activity-btn').removeClass('hidden');
+  $('#activities-list').removeClass('hidden').html('<div class="rounded-xl bg-gray-50 p-4 text-xs text-gray-400"><i class="ph ph-spinner-gap animate-spin mr-1"></i> Loading program…</div>');
+
+  $.get('<?= site_url('admin/event/activities/') ?>' + eventId, function(res){
+    if(!res.success){
+      $('#activities-list').html('<div class="rounded-xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800">' + $('<div>').text(res.message || 'Unable to load activities.').html() + '</div>');
+      return;
+    }
+
+    var rows = res.activities || [];
+    if(!rows.length){
+      var starterButton = currentEventData && parseInt(currentEventData.is_seasonal || 0,10) === 1
+        ? '<button type="button" onclick="loadStarterProgram()" class="mt-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gold-50 hover:bg-gold-100 text-gold-700 text-xs font-semibold"><i class="ph ph-sparkle"></i> Load Editable Starter Program</button>'
+        : '';
+
+      $('#activities-list').html(
+        '<div class="rounded-xl border border-dashed border-gray-200 p-5 text-center">' +
+          '<i class="ph ph-calendar-plus text-2xl text-gray-300"></i>' +
+          '<div class="text-xs text-gray-500 mt-2">No program activities yet.</div>' +
+          '<div class="text-[11px] text-gray-400 mt-1">Add Masses, meals, processions, programs or any activity for this event.</div>' +
+          starterButton +
+        '</div>'
+      );
+      return;
+    }
+
+    $('#activities-list').empty();
+    rows.forEach(function(row){
+      activityCache[String(row.id)] = row;
+      var meta = activityTypeMeta(row.activity_type);
+      var range = formatIsoDate(row.activity_date);
+      if(row.activity_end_date && row.activity_end_date !== row.activity_date){
+        range += ' – ' + formatIsoDate(row.activity_end_date);
+      }
+
+      var time = '';
+      if(row.start_time){
+        time = formatActivityTime(row.start_time);
+        if(row.end_time) time += ' – ' + formatActivityTime(row.end_time);
+      }
+
+      var html =
+        '<div class="rounded-xl border ' + (parseInt(row.is_featured,10) === 1 ? 'border-gold-200 bg-gold-50/30' : 'border-gray-100 bg-gray-50/40') + ' p-3.5 sm:p-4">' +
+          '<div class="flex items-start gap-3">' +
+            '<div class="w-9 h-9 rounded-lg bg-white border border-gray-100 text-parish-700 flex items-center justify-center flex-shrink-0"><i class="ph ' + meta[0] + '"></i></div>' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex flex-wrap items-center gap-2">' +
+                '<div class="font-semibold text-sm text-gray-800">' + $('<div>').text(row.title).html() + '</div>' +
+                (parseInt(row.is_featured,10) === 1 ? '<span class="px-2 py-0.5 rounded-full bg-gold-100 text-gold-700 text-[9px] font-bold uppercase tracking-wide">Featured</span>' : '') +
+              '</div>' +
+              '<div class="mt-1 text-[11px] text-gray-500 flex flex-wrap gap-x-3 gap-y-1">' +
+                '<span>' + $('<div>').text(meta[1]).html() + '</span>' +
+                '<span><i class="ph ph-calendar-blank mr-1"></i>' + range + '</span>' +
+                (time ? '<span><i class="ph ph-clock mr-1"></i>' + time + '</span>' : '') +
+                (row.location ? '<span><i class="ph ph-map-pin mr-1"></i>' + $('<div>').text(row.location).html() + '</span>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="flex items-center gap-1 flex-shrink-0">' +
+              '<button type="button" onclick="editActivity(' + parseInt(row.id,10) + ')" title="Edit activity" class="w-8 h-8 rounded-lg border border-parish-100 bg-white text-parish-700 hover:bg-parish-50 flex items-center justify-center"><i class="ph ph-pencil-simple"></i></button>' +
+              '<button type="button" onclick="deleteActivity(' + parseInt(row.id,10) + ')" title="Delete activity" class="w-8 h-8 rounded-lg border border-red-100 bg-white text-red-600 hover:bg-red-50 flex items-center justify-center"><i class="ph ph-trash"></i></button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+      $('#activities-list').append(html);
+    });
+  }).fail(function(){
+    $('#activities-list').html('<div class="rounded-xl bg-red-50 border border-red-100 p-4 text-xs text-red-700">Unable to load the event program.</div>');
+  });
+}
+
+function loadStarterProgram(){
+  var eventId = parseInt($('#f-id').val() || 0,10);
+  if(!eventId) return;
+
+  Swal.fire({
+    icon:'question',
+    title:'Load the starter program?',
+    text:'Editable common activities for this seasonal event will be added. Review all dates, times and details before publishing.',
+    showCancelButton:true,
+    confirmButtonText:'Load Starter Program',
+    confirmButtonColor:'#235a38'
+  }).then(function(result){
+    if(!result.isConfirmed) return;
+
+    $.post('<?= site_url('admin/event/activities/seed/') ?>' + eventId, function(res){
+      if(res.success){
+        toastr.success(res.message);
+        loadActivities(eventId);
+      } else {
+        Swal.fire({icon:'error',title:'Could not load starter program',text:res.message || 'Please try again.',confirmButtonColor:'#235a38'});
+      }
+    });
+  });
+}
+
+function openActivityModal(id){
+  if(!activityReady){
+    Swal.fire({icon:'warning',title:'Database upgrade required',text:'Run database/migrations/20260924_event_activities.sql in phpMyAdmin first.',confirmButtonColor:'#235a38'});
+    return;
+  }
+
+  var eventId = parseInt($('#f-id').val() || 0,10);
+  if(!eventId){
+    Swal.fire({icon:'info',title:'Save the event first',text:'The event needs to exist before activities can be added.',confirmButtonColor:'#235a38'});
+    return;
+  }
+
+  $('#activity-form')[0].reset();
+  $('#a-id').val('');
+  $('#a-event-id').val(eventId);
+  $('#a-type').val('activity');
+  $('#a-sort-order').val(0);
+  $('#a-location').val($('#f-location').val() || 'Sta. Monica Parish Church');
+  $('#a-date').val($('#f-date').val() || '');
+  $('#activity-modal-title').text('Add Activity');
+
+  if(id){
+    var row = activityCache[String(id)];
+    if(!row) return;
+    $('#a-id').val(row.id);
+    $('#a-event-id').val(row.event_id);
+    $('#a-type').val(row.activity_type || 'activity');
+    $('#a-title').val(row.title || '');
+    $('#a-description').val(row.description || '');
+    $('#a-date').val(row.activity_date || '');
+    $('#a-end-date').val(row.activity_end_date || '');
+    $('#a-start-time').val(row.start_time ? String(row.start_time).slice(0,5) : '');
+    $('#a-end-time').val(row.end_time ? String(row.end_time).slice(0,5) : '');
+    $('#a-location').val(row.location || '');
+    $('#a-sort-order').val(row.sort_order || 0);
+    $('#a-featured').prop('checked', parseInt(row.is_featured || 0,10) === 1);
+    $('#activity-modal-title').text('Edit Activity');
+  }
+
+  $('#activity-modal').removeClass('hidden').addClass('flex');
+}
+
+function closeActivityModal(){
+  $('#activity-modal').addClass('hidden').removeClass('flex');
+}
+
+function editActivity(id){
+  openActivityModal(id);
+}
+
+function deleteActivity(id){
+  Swal.fire({
+    icon:'warning',
+    title:'Remove this program activity?',
+    text:'Only this activity will be removed; the event itself remains.',
+    showCancelButton:true,
+    confirmButtonText:'Remove',
+    confirmButtonColor:'#dc2626'
+  }).then(function(result){
+    if(!result.isConfirmed) return;
+    $.post('<?= site_url('admin/event/activity/delete/') ?>' + id, function(res){
+      if(res.success){
+        toastr.success(res.message);
+        loadActivities(parseInt($('#f-id').val(),10));
+      } else {
+        toastr.error(res.message || 'Could not remove activity.');
+      }
+    });
+  });
+}
+
 function editEvent(id){
   $.get('<?= site_url('admin/event/get/') ?>' + id, function(res){
     if(!res.success){
@@ -324,6 +671,7 @@ function editEvent(id){
 
     var d = res.data;
     resetForm();
+    currentEventData = d;
     $('#f-id').val(d.id);
     $('#f-title').val(d.title);
     $('#f-desc').val(d.description);
@@ -349,6 +697,7 @@ function editEvent(id){
     }
 
     updateDuration();
+    loadActivities(d.id);
     openModal();
   }).fail(function(){
     toastr.error('Unable to load event.');
@@ -456,7 +805,7 @@ function prepareSeasonal(key, year){
   Swal.fire({
     icon:'question',
     title:'Prepare this seasonal event?',
-    text:'A Draft event will be created for ' + year + '. You can then add the year’s photo and exact parish schedule.',
+    text:'A Draft event will be created for ' + year + ' with editable starter activities. You can change, remove or add any Mass, meal, procession, program or parish activity.',
     showCancelButton:true,
     confirmButtonText:'Prepare Event',
     confirmButtonColor:'#235a38'
@@ -481,6 +830,28 @@ function prepareSeasonal(key, year){
     });
   });
 }
+
+$('#activity-form').on('submit', function(e){
+  e.preventDefault();
+
+  var $btn = $('#activity-save-btn');
+  var original = $btn.html();
+  $btn.prop('disabled',true).addClass('opacity-60').html('<i class="ph ph-spinner-gap animate-spin mr-1"></i> Saving…');
+
+  $.post('<?= site_url('admin/event/activity/save') ?>', $(this).serialize(), function(res){
+    if(res.success){
+      toastr.success(res.message);
+      closeActivityModal();
+      loadActivities(parseInt($('#f-id').val(),10));
+    } else {
+      Swal.fire({icon:'error',title:'Could not save activity',text:res.message || 'Please review the activity details.',confirmButtonColor:'#235a38'});
+    }
+  }).fail(function(){
+    Swal.fire({icon:'error',title:'Could not save activity',text:'The server did not accept the activity update.',confirmButtonColor:'#235a38'});
+  }).always(function(){
+    $btn.prop('disabled',false).removeClass('opacity-60').html(original);
+  });
+});
 
 $('#f-date, #f-end').on('change', updateDuration);
 
