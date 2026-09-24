@@ -1,9 +1,12 @@
 <?php
 $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Church_Alburquerque_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
+$event_cover = !empty($item['cover_image']) ? base_url($item['cover_image']) : $hero_img;
+$event_end = !empty($item['end_date']) ? $item['end_date'] : $item['event_date'];
+$duration_days = max(1, (int)((strtotime($event_end) - strtotime($item['event_date'])) / 86400) + 1);
 ?>
 <article>
   <section class="relative overflow-hidden bg-parish-900 min-h-[340px] flex items-end">
-    <img src="<?= $hero_img ?>" alt="" class="absolute inset-0 w-full h-full object-cover opacity-35">
+    <img src="<?= html_escape($event_cover) ?>" alt="<?= html_escape($item['title']) ?>" class="absolute inset-0 w-full h-full object-cover opacity-55">
     <div class="absolute inset-0 bg-gradient-to-r from-parish-900 via-parish-900/85 to-parish-900/40"></div>
     <div class="relative max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-14 text-white">
       <a href="<?= site_url('events') ?>" class="inline-flex items-center gap-2 text-sm text-white/65 hover:text-white transition"><i class="ph ph-arrow-left"></i> Back to Events</a>
@@ -13,12 +16,16 @@ $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Ch
           <div class="text-3xl font-bold leading-none"><?= date('d', strtotime($item['event_date'])) ?></div>
         </div>
         <div>
-          <?php if ($item['category']): ?><div class="text-[11px] text-gold-200 font-semibold uppercase tracking-wider"><?= html_escape($item['category']) ?></div><?php endif; ?>
+          <div class="flex flex-wrap items-center gap-2">
+            <?php if ($item['category']): ?><div class="text-[11px] text-gold-200 font-semibold uppercase tracking-wider"><?= html_escape($item['category']) ?></div><?php endif; ?>
+            <?php if (!empty($item['is_seasonal'])): ?><span class="px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-[9px] font-bold uppercase tracking-wider">Seasonal <?= (int)($item['season_year'] ?? date('Y', strtotime($item['event_date']))) ?></span><?php endif; ?>
+          </div>
           <h1 class="text-3xl sm:text-5xl font-bold tracking-tight leading-tight mt-1"><?= html_escape($item['title']) ?></h1>
         </div>
       </div>
       <div class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/65">
-        <span class="inline-flex items-center gap-2"><i class="ph ph-calendar-blank"></i><?= format_date($item['event_date']) ?><?= $item['event_time'] ? ', ' . date('g:i A', strtotime($item['event_time'])) : '' ?></span>
+        <span class="inline-flex items-center gap-2"><i class="ph ph-calendar-blank"></i><?= format_date($item['event_date']) ?><?php if ($event_end !== $item['event_date']): ?> – <?= format_date($event_end) ?><?php endif; ?><?= $item['event_time'] ? ', ' . date('g:i A', strtotime($item['event_time'])) : '' ?></span>
+        <?php if ($duration_days > 1): ?><span class="inline-flex items-center gap-2"><i class="ph ph-clock"></i><?= $duration_days ?> days</span><?php endif; ?>
         <span class="inline-flex items-center gap-2"><i class="ph ph-map-pin"></i><?= html_escape($item['location'] ?: 'TBA') ?></span>
       </div>
     </div>
@@ -37,7 +44,7 @@ $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Ch
         <div class="rounded-3xl bg-parish-50 border border-parish-100 p-6">
           <div class="heritage-kicker text-gold-600">Event details</div>
           <div class="mt-5 space-y-4 text-sm">
-            <div class="flex gap-3"><i class="ph ph-calendar-blank text-parish-700 text-lg"></i><div><div class="font-semibold text-gray-800"><?= format_date($item['event_date']) ?></div><div class="text-gray-500 mt-0.5"><?= $item['event_time'] ? date('g:i A', strtotime($item['event_time'])) : 'Time to be announced' ?></div></div></div>
+            <div class="flex gap-3"><i class="ph ph-calendar-blank text-parish-700 text-lg"></i><div><div class="font-semibold text-gray-800"><?= format_date($item['event_date']) ?><?php if ($event_end !== $item['event_date']): ?> – <?= format_date($event_end) ?><?php endif; ?></div><div class="text-gray-500 mt-0.5"><?= $duration_days > 1 ? $duration_days . '-day duration' : 'One-day event' ?><?= $item['event_time'] ? ' · ' . date('g:i A', strtotime($item['event_time'])) : '' ?></div></div></div>
             <div class="flex gap-3"><i class="ph ph-map-pin text-parish-700 text-lg"></i><div><div class="font-semibold text-gray-800"><?= html_escape($item['location'] ?: 'TBA') ?></div><div class="text-gray-500 mt-0.5">Alburquerque, Bohol</div></div></div>
           </div>
         </div>

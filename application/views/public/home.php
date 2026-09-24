@@ -2,6 +2,17 @@
 $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Church_Alburquerque_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
 $interior_img = 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Santa_Monica_Church_Alburquerque_inside_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
 $convent_img = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Santa_Monica_Church_Alburquerque_with_convent_%28Tagbilaran_East_Road%2C_Alburquerque%2C_Bohol%3B_01-12-2023%29.jpg';
+
+$seasonal_theme = [
+    'lent'         => ['#3c2447', '#c9add7', 'Journey with Christ'],
+    'christmas'    => ['#123f32', '#e7bf59', 'Christmas at Sta. Monica'],
+    'rosary_month' => ['#234d74', '#cedcec', 'Month of the Holy Rosary'],
+    'undas'        => ['#292929', '#d5b57d', 'Remembering the Faithful Departed'],
+    'new_year'     => ['#1d304c', '#dcc47c', 'Begin the Year in Prayer'],
+    'fiesta'       => ['#772f25', '#e5ba52', 'Our Patronal Celebration'],
+];
+$season_style = !empty($seasonal_event) ? ($seasonal_theme[$seasonal_event['season_key'] ?? ''] ?? ['#1a3c28', '#e7bf59', 'Seasonal Celebration']) : null;
+$season_cover = !empty($seasonal_event['cover_image']) ? base_url($seasonal_event['cover_image']) : $hero_img;
 ?>
 
 <!-- Destination-style hero -->
@@ -95,6 +106,56 @@ $convent_img = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Santa_Monica
     </div>
   </div>
 </section>
+
+<?php if (!empty($seasonal_event)): ?>
+<!-- Seasonal homepage feature -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12">
+  <a href="<?= site_url('events/' . $seasonal_event['slug']) ?>" class="group block relative overflow-hidden rounded-[2rem] min-h-[420px] sm:min-h-[460px] shadow-heritage">
+    <img src="<?= html_escape($season_cover) ?>" alt="<?= html_escape($seasonal_event['title']) ?>" class="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-[1.025]">
+    <div class="absolute inset-0" style="background:linear-gradient(90deg, <?= $season_style[0] ?>f5 0%, <?= $season_style[0] ?>dd 44%, <?= $season_style[0] ?>55 76%, transparent 100%);"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10"></div>
+
+    <div class="relative min-h-[420px] sm:min-h-[460px] flex items-end">
+      <div class="w-full max-w-3xl p-7 sm:p-10 lg:p-12 text-white">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/15 text-[11px] uppercase tracking-[.16em] font-bold" style="color:<?= $season_style[1] ?>">
+          <i class="ph ph-star"></i> <?= html_escape($season_style[2]) ?>
+        </div>
+
+        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-[-.035em] leading-[1.02] mt-5">
+          <?= html_escape($seasonal_event['title']) ?>
+        </h2>
+
+        <?php if (!empty($seasonal_event['description'])): ?>
+          <p class="mt-5 text-white/78 text-base sm:text-lg leading-relaxed max-w-2xl">
+            <?= html_escape(mb_strimwidth(strip_tags($seasonal_event['description']), 0, 220, '…')) ?>
+          </p>
+        <?php endif; ?>
+
+        <div class="mt-7 flex flex-wrap items-center gap-3 text-sm">
+          <span class="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/20 backdrop-blur border border-white/10">
+            <i class="ph ph-calendar-blank" style="color:<?= $season_style[1] ?>"></i>
+            <?= format_date($seasonal_event['event_date']) ?>
+            <?php if (!empty($seasonal_event['end_date']) && $seasonal_event['end_date'] !== $seasonal_event['event_date']): ?>
+              – <?= format_date($seasonal_event['end_date']) ?>
+            <?php endif; ?>
+          </span>
+
+          <?php if (!empty($seasonal_event_duration) && $seasonal_event_duration > 1): ?>
+            <span class="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/20 backdrop-blur border border-white/10">
+              <i class="ph ph-clock" style="color:<?= $season_style[1] ?>"></i>
+              <?= (int)$seasonal_event_duration ?>-day parish season
+            </span>
+          <?php endif; ?>
+        </div>
+
+        <div class="mt-8 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white text-gray-900 font-semibold shadow-lg group-hover:bg-gold-50 transition">
+          View schedules & details <i class="ph ph-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+  </a>
+</section>
+<?php endif; ?>
 
 <!-- Heritage story -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">

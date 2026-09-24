@@ -21,23 +21,30 @@ $hero_img = 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Santa_Monica_Ch
     </div>
   <?php else: ?>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <?php foreach ($events as $e): ?>
+      <?php foreach ($events as $e):
+        $event_cover = !empty($e['cover_image']) ? base_url($e['cover_image']) : $hero_img;
+        $event_end = !empty($e['end_date']) ? $e['end_date'] : $e['event_date'];
+        $duration_days = max(1, (int)((strtotime($event_end) - strtotime($e['event_date'])) / 86400) + 1);
+      ?>
       <a href="<?= site_url('events/' . $e['slug']) ?>" class="group bg-white rounded-3xl border border-stonewarm-200 overflow-hidden hover:border-parish-200 hover:shadow-heritage transition duration-300">
-        <div class="relative h-40 overflow-hidden bg-parish-900">
-          <img src="<?= $hero_img ?>" alt="" class="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:scale-105 transition duration-700">
+        <div class="relative h-48 overflow-hidden bg-parish-900">
+          <img src="<?= html_escape($event_cover) ?>" alt="<?= html_escape($e['title']) ?>" class="absolute inset-0 w-full h-full object-cover opacity-65 group-hover:scale-105 transition duration-700">
           <div class="absolute inset-0 bg-gradient-to-t from-parish-900/90 to-transparent"></div>
           <div class="absolute left-5 bottom-4 flex items-end gap-3 text-white">
             <div class="w-16 h-16 rounded-2xl bg-white text-parish-900 flex flex-col items-center justify-center shadow-lg">
               <div class="text-[10px] font-bold uppercase tracking-wider text-gold-600"><?= date('M', strtotime($e['event_date'])) ?></div>
               <div class="text-2xl font-bold leading-none"><?= date('d', strtotime($e['event_date'])) ?></div>
             </div>
-            <?php if ($e['category']): ?><div class="text-[11px] font-semibold uppercase tracking-wider text-gold-200 mb-1"><?= html_escape($e['category']) ?></div><?php endif; ?>
+            <div class="mb-1 flex flex-wrap items-center gap-2">
+              <?php if ($e['category']): ?><div class="text-[11px] font-semibold uppercase tracking-wider text-gold-200"><?= html_escape($e['category']) ?></div><?php endif; ?>
+              <?php if (!empty($e['is_seasonal'])): ?><span class="px-2 py-0.5 rounded-full bg-white/15 border border-white/15 text-[9px] font-bold uppercase tracking-wider">Seasonal</span><?php endif; ?>
+            </div>
           </div>
         </div>
         <div class="p-5 sm:p-6">
           <h2 class="text-xl font-bold text-gray-900 group-hover:text-parish-800 transition"><?= html_escape($e['title']) ?></h2>
           <div class="mt-4 space-y-2 text-sm text-gray-500">
-            <div class="flex items-center gap-2"><i class="ph ph-calendar-blank text-parish-700"></i><?= format_date($e['event_date']) ?><?= $e['event_time'] ? ' · ' . date('g:i A', strtotime($e['event_time'])) : '' ?></div>
+            <div class="flex items-start gap-2"><i class="ph ph-calendar-blank text-parish-700 mt-0.5"></i><span><?= format_date($e['event_date']) ?><?php if ($event_end !== $e['event_date']): ?> – <?= format_date($event_end) ?><?php endif; ?><?= $e['event_time'] ? ' · ' . date('g:i A', strtotime($e['event_time'])) : '' ?><?php if ($duration_days > 1): ?><span class="block text-[11px] text-gray-400 mt-0.5"><?= $duration_days ?> days</span><?php endif; ?></span></div>
             <div class="flex items-center gap-2"><i class="ph ph-map-pin text-parish-700"></i><?= html_escape($e['location'] ?: 'Parish grounds') ?></div>
           </div>
           <div class="mt-5 pt-4 border-t border-stonewarm-200 flex items-center justify-between">

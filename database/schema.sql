@@ -371,6 +371,12 @@ CREATE TABLE events (
     description TEXT DEFAULT NULL,
     cover_image VARCHAR(255) DEFAULT NULL,
     category VARCHAR(100) DEFAULT NULL, -- feast, novena, procession, fiesta, youth, formation, catechism, outreach...
+    season_key VARCHAR(50) DEFAULT NULL,
+    season_year SMALLINT UNSIGNED DEFAULT NULL,
+    is_seasonal BOOLEAN NOT NULL DEFAULT 0,
+    highlight_on_home BOOLEAN NOT NULL DEFAULT 0,
+    highlight_start DATE DEFAULT NULL,
+    highlight_end DATE DEFAULT NULL,
     event_date DATE NOT NULL,
     end_date DATE DEFAULT NULL,
     event_time TIME DEFAULT NULL,
@@ -380,7 +386,9 @@ CREATE TABLE events (
     status ENUM('draft','published','cancelled','completed') NOT NULL DEFAULT 'published',
     created_by INT UNSIGNED DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uq_event_season_year (season_key, season_year),
+    INDEX idx_event_highlight (highlight_on_home, highlight_start, highlight_end)
 ) ENGINE=InnoDB;
 
 CREATE TABLE event_registrations (

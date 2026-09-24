@@ -15,6 +15,8 @@ class Home extends Public_Controller
         $data['next_mass']       = $this->MassSchedule_model->next_mass();
         $data['announcements']   = $this->Announcement_model->published(4);
         $data['events']          = $this->Event_model->upcoming(4);
+        $data['seasonal_event']  = $this->Event_model->active_seasonal_highlight();
+        $data['seasonal_event_duration'] = $data['seasonal_event'] ? $this->Event_model->event_duration_days($data['seasonal_event']) : 0;
         $data['service_types']   = $this->ServiceType_model->all_active();
         $data['priests']         = $this->User_model->priests(3);
         $this->render_public('public/home', $data);
