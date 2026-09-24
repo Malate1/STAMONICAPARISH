@@ -164,7 +164,7 @@
           <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
             <div>
               <div class="text-xs font-bold uppercase tracking-wide text-gold-700">Special booking</div>
-              <p class="text-xs text-gray-500 mt-1">Applies to dates outside the regular parish schedule. Fee and hours are fully configurable.</p>
+              <p class="text-xs text-gray-500 mt-1">Special dates are generated automatically from eligible dates that do not match any Regular / Free Schedule rule. Staff only configures the fee, hours, interval, and booking limits.</p>
             </div>
             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" name="allow_special_booking" id="f-special-enabled" value="1" class="rounded border-gray-300 text-gold-600">
@@ -174,7 +174,7 @@
 
           <div class="mb-4 rounded-xl bg-white/80 border border-gold-100 p-4 text-xs text-gray-600 leading-relaxed">
             <strong class="text-gold-800">Special Booking legend:</strong>
-            the fee is charged only for Special bookings; the start/end time defines the full daily protected church window; preparation and clearance must fit inside it; the interval controls how often ceremony start times are generated.
+            you do not create special dates one by one. The system automatically treats eligible non-regular dates as Special Booking dates, then generates available start times using the configured hours, interval, protected church time, conflicts, and priest availability.
           </div>
 
           <div id="special-settings" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
