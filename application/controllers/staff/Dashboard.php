@@ -7,7 +7,7 @@ class Dashboard extends Role_Controller
     {
         parent::__construct();
         $this->guard([ROLE_SECRETARY]);
-        $this->load->model(['Booking_model', 'Certificate_model', 'Payment_model']);
+        $this->load->model(['Booking_model', 'Certificate_model', 'Payment_model', 'DashboardReport_model']);
     }
 
     public function index()
@@ -21,6 +21,10 @@ class Dashboard extends Role_Controller
             'certificates_ready'      => $this->db->where('status', 'ready_for_release')->count_all_results('certificate_requests'),
         ];
         $data['status_counts'] = $status_counts;
+        $data['intake_trend'] = $this->DashboardReport_model->daily_operational_intake(14);
+        $data['service_mix'] = $this->DashboardReport_model->service_mix(90, [], 7);
+        $data['status_mix'] = $this->DashboardReport_model->booking_status_mix();
+        $data['office_report'] = $this->DashboardReport_model->office_report();
 
         $this->render_app('staff/dashboard', $data, 'layouts/app_admin');
     }

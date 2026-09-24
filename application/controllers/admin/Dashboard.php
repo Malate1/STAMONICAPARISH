@@ -7,7 +7,7 @@ class Dashboard extends Role_Controller
     {
         parent::__construct();
         $this->guard([ROLE_ADMIN]);
-        $this->load->model(['Booking_model', 'Certificate_model', 'Payment_model', 'Audit_model', 'User_model']);
+        $this->load->model(['Booking_model', 'Certificate_model', 'Payment_model', 'Audit_model', 'User_model', 'DashboardReport_model']);
     }
 
     public function index()
@@ -29,6 +29,11 @@ class Dashboard extends Role_Controller
             'secretaries'  => count($this->User_model->list_by_role(ROLE_SECRETARY)),
         ];
         $data['revenue_this_month'] = $this->Payment_model->total_verified_between(date('Y-m-01'), date('Y-m-t 23:59:59'));
+        $data['booking_trend'] = $this->DashboardReport_model->monthly_bookings(6);
+        $data['revenue_trend'] = $this->DashboardReport_model->monthly_verified_collections(6);
+        $data['service_mix'] = $this->DashboardReport_model->service_mix(180, [], 7);
+        $data['user_growth'] = $this->DashboardReport_model->monthly_user_growth(6);
+        $data['office_report'] = $this->DashboardReport_model->office_report();
 
         $this->render_app('admin/dashboard', $data, 'layouts/app_admin');
     }
