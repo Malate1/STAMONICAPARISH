@@ -51,6 +51,8 @@ if (!function_exists('status_badge_class')) {
             'awaiting_payment'        => 'bg-orange-100 text-orange-700',
             'payment_verification'    => 'bg-orange-100 text-orange-700',
             'approved'                => 'bg-emerald-100 text-emerald-700',
+            'ready_for_reading'       => 'bg-blue-100 text-blue-700',
+            'listed'                  => 'bg-blue-100 text-blue-700',
             'scheduled'               => 'bg-sky-100 text-sky-700',
             'completed'               => 'bg-green-100 text-green-700',
             'cancelled'               => 'bg-gray-200 text-gray-600',

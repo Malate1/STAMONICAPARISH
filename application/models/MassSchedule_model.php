@@ -73,6 +73,106 @@ class MassSchedule_model extends CI_Model
             ->get($this->table)->result_array();
     }
 
+    /**
+     * Build real upcoming Mass occurrences instead of exposing only recurring
+     * schedule templates. This lets Mass Intentions attach to an actual date.
+     */
+    public function upcoming_occurrences($days = 60, $cutoff_minutes = 30, $limit = 120)
+    {
+        $days = max(1, min(365, (int) $days));
+        $cutoff_minutes = max(0, (int) $cutoff_minutes);
+        $limit = max(1, (int) $limit);
+
+        $start = new DateTimeImmutable(date('Y-m-d'));
+        $end = $start->modify('+' . $days . ' days');
+        $cutoff_ts = time() + ($cutoff_minutes * 60);
+        $occurrences = [];
+
+        // Mass schedules are a small configuration table. Load active rows
+        // once and expand the recurring templates in PHP instead of querying
+        // the database twice for every calendar day.
+        $active_rows = $this->db->where('is_active', 1)->get($this->table)->result_array();
+        $regular_by_dow = array_fill(0, 7, []);
+        $specific_by_date = [];
+
+        foreach ($active_rows as $row) {
+            if (!empty($row['specific_date'])) {
+                $specific_by_date[$row['specific_date']][] = $row;
+            } elseif ($row['day_of_week'] !== null) {
+                $regular_by_dow[(int) $row['day_of_week']][] = $row;
+            }
+        }
+
+        for ($date = $start; $date <= $end && count($occurrences) < $limit; $date = $date->modify('+1 day')) {
+            $date_string = $date->format('Y-m-d');
+            $dow = (int) $date->format('w');
+            $specific = $specific_by_date[$date_string] ?? [];
+
+            $has_override = false;
+            foreach ($specific as $row) {
+                if (!empty($row['is_override'])) {
+                    $has_override = true;
+                    break;
+                }
+            }
+
+            $regular = $has_override ? [] : ($regular_by_dow[$dow] ?? []);
+            $rows = array_merge($regular, $specific);
+            usort($rows, function ($a, $b) {
+                return strcmp($a['mass_time'], $b['mass_time']);
+            });
+
+            foreach ($rows as $row) {
+                $mass_ts = strtotime($date_string . ' ' . $row['mass_time']);
+                if ($mass_ts <= $cutoff_ts) continue;
+
+                $row['mass_date'] = $date_string;
+                $row['mass_datetime'] = date('Y-m-d H:i:s', $mass_ts);
+                $row['date_label'] = date('D, M j, Y', $mass_ts);
+                $row['time_label'] = date('g:i A', $mass_ts);
+                $occurrences[] = $row;
+
+                if (count($occurrences) >= $limit) break 2;
+            }
+        }
+
+        return $occurrences;
+    }
+
+    /**
+     * Validate that a selected schedule/date is a real upcoming Mass
+     * occurrence and has not passed the Mass Intention cutoff.
+     */
+    public function occurrence_for_submission($schedule_id, $mass_date, $cutoff_minutes = 30)
+    {
+        $schedule = $this->get((int) $schedule_id);
+        if (!$schedule || empty($schedule['is_active'])) return null;
+
+        $date = DateTimeImmutable::createFromFormat('Y-m-d', (string) $mass_date);
+        if (!$date || $date->format('Y-m-d') !== $mass_date) return null;
+
+        if (!empty($schedule['specific_date'])) {
+            if ($schedule['specific_date'] !== $mass_date) return null;
+        } else {
+            if ((int) $schedule['day_of_week'] !== (int) $date->format('w')) return null;
+
+            $override = $this->db->where('specific_date', $mass_date)
+                ->where('is_active', 1)
+                ->where('is_override', 1)
+                ->count_all_results($this->table);
+            if ($override > 0) return null;
+        }
+
+        $mass_ts = strtotime($mass_date . ' ' . $schedule['mass_time']);
+        if (!$mass_ts || $mass_ts <= time() + (max(0, (int) $cutoff_minutes) * 60)) {
+            return null;
+        }
+
+        $schedule['mass_date'] = $mass_date;
+        $schedule['mass_datetime'] = date('Y-m-d H:i:s', $mass_ts);
+        return $schedule;
+    }
+
     public function get($id)
     {
         return $this->db->get_where($this->table, ['id' => $id])->row_array();

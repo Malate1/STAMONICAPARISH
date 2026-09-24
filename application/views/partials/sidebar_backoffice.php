@@ -37,12 +37,14 @@ if (!function_exists('nav_item')) {
 
     <?php if ($role === ROLE_SECRETARY): ?>
       <?= nav_item(site_url('staff/mass_intention'), 'ph-hands-praying', 'Mass Intentions', $seg2 === 'mass_intention') ?>
+      <?= nav_item(site_url('staff/mass-intention-reader'), 'ph-file-text', 'Commentator Sheet', $seg2 === 'mass-intention-reader') ?>
       <?= nav_item(site_url('staff/walkin'), 'ph-user-plus', 'Walk-in Transaction', $seg2 === 'walkin') ?>
     <?php endif; ?>
 
     <?php if ($role === ROLE_PRIEST): ?>
       <div class="pt-3 pb-1 px-3 text-[11px] uppercase tracking-wide text-parish-400">My Ministry</div>
       <?= nav_item(site_url('priest/schedule'), 'ph-calendar-blank', 'My Schedule', $seg2 === 'schedule') ?>
+      <?= nav_item(site_url('priest/mass-intentions'), 'ph-hands-praying', 'Mass Intention Reader', $seg2 === 'mass-intentions' || $seg2 === 'mass_intention') ?>
     <?php endif; ?>
 
     <?php if ($role === ROLE_ADMIN): ?>
@@ -83,8 +85,13 @@ if (!function_exists('nav_item')) {
           <?= nav_item(site_url('staff/service-config'), 'ph-calendar-dots', 'Service Availability', false) ?>
         <?php endif; ?>
       <?php endif; ?>
+      <?php if ($role === ROLE_SECRETARY): ?>
+        <?= nav_item(site_url('staff/mass_intention'), 'ph-hands-praying', 'Mass Intentions', false) ?>
+        <?= nav_item(site_url('staff/mass-intention-reader'), 'ph-file-text', 'Commentator Sheet', false) ?>
+      <?php endif; ?>
       <?php if ($role === ROLE_PRIEST): ?>
         <?= nav_item(site_url('priest/schedule'), 'ph-calendar-blank', 'My Schedule', false) ?>
+        <?= nav_item(site_url('priest/mass-intentions'), 'ph-hands-praying', 'Mass Intention Reader', false) ?>
       <?php endif; ?>
       <?= nav_item(site_url('logout'), 'ph-sign-out', 'Logout', false) ?>
     </nav>

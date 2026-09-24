@@ -103,6 +103,11 @@ $route['my/profile/update']          = 'parishioner/profile/update';
 $route['my/profile/change-password'] = 'parishioner/profile/change_password';
 $route['my/mass-intentions']         = 'parishioner/mass_intention';
 $route['my/mass-intentions/store']   = 'parishioner/mass_intention/store';
+$route['staff/mass-intention-reader'] = 'staff/mass_intention/reader';
+$route['staff/mass-intention-reader/complete'] = 'staff/mass_intention/complete_mass';
+$route['staff/mass-intention/assign-mass'] = 'staff/mass_intention/assign_mass';
+$route['priest/mass-intentions']      = 'priest/mass_intention';
+$route['priest/mass-intentions/reader'] = 'priest/mass_intention/reader';
 
 // ---- Admin area ----
 $route['admin/service_type/get/(:num)']                    = 'admin/service_type/get/$1';

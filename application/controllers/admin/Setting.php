@@ -19,13 +19,20 @@ class Setting extends Role_Controller
 
     public function store()
     {
-        $fields = ['parish_name', 'parish_address', 'parish_contact', 'gcash_account_name', 'gcash_account_number', 'priest_booking_capacity'];
+        $fields = ['parish_name', 'parish_address', 'parish_contact', 'gcash_account_name', 'gcash_account_number', 'priest_booking_capacity', 'mass_intention_cutoff_minutes'];
         foreach ($fields as $f) {
             $value = $this->input->post($f, true);
             if ($f === 'priest_booking_capacity') {
                 $value = (string) max(1, min(10, (int) $value));
+            } elseif ($f === 'mass_intention_cutoff_minutes') {
+                $value = (string) max(0, min(1440, (int) $value));
             }
-            $this->db->where('setting_key', $f)->update('system_settings', ['setting_value' => $value]);
+            $existing = $this->db->get_where('system_settings', ['setting_key' => $f])->row_array();
+            if ($existing) {
+                $this->db->where('setting_key', $f)->update('system_settings', ['setting_value' => $value]);
+            } else {
+                $this->db->insert('system_settings', ['setting_key' => $f, 'setting_value' => $value]);
+            }
         }
 
         if (!empty($_FILES['gcash_qr_image']['name'])) {

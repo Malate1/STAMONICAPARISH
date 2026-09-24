@@ -28,6 +28,15 @@
   </div>
 
   <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+    <h2 class="font-semibold text-gray-800">Mass Intention Workflow</h2>
+    <div>
+      <label class="text-xs font-medium text-gray-500">Online Submission Cutoff Before Mass (minutes)</label>
+      <input type="number" min="0" max="1440" step="5" name="mass_intention_cutoff_minutes" value="<?= html_escape($settings['mass_intention_cutoff_minutes'] ?? '30') ?>" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm">
+      <p class="text-[11px] text-gray-400 mt-1">Example: 30 means the selected Mass disappears from online intention choices 30 minutes before it begins, giving the secretary and commentator time to finalize the reader sheet.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
     <h2 class="font-semibold text-gray-800">GCash Configuration</h2>
     <div>
       <label class="text-xs font-medium text-gray-500">Account Name</label>

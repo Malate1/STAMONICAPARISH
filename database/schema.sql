@@ -313,15 +313,22 @@ CREATE TABLE mass_intentions (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED DEFAULT NULL,
     mass_schedule_id INT UNSIGNED DEFAULT NULL,
+    mass_date DATE DEFAULT NULL,
     intention_type ENUM('thanksgiving','birthday','healing','special','safe_travel','souls_departed','anniversary','other') NOT NULL,
     offered_for VARCHAR(255) NOT NULL,
     requestor_name VARCHAR(150) NOT NULL,
     requestor_contact VARCHAR(100) DEFAULT NULL,
-    status ENUM('pending','approved','listed','completed','cancelled') NOT NULL DEFAULT 'pending',
+    status ENUM('pending','approved','ready_for_reading','completed','cancelled') NOT NULL DEFAULT 'pending',
     fee_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    processed_by INT UNSIGNED DEFAULT NULL,
+    approved_at DATETIME DEFAULT NULL,
+    ready_at DATETIME DEFAULT NULL,
+    completed_at DATETIME DEFAULT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (mass_schedule_id) REFERENCES mass_schedules(id) ON DELETE SET NULL
+    FOREIGN KEY (mass_schedule_id) REFERENCES mass_schedules(id) ON DELETE SET NULL,
+    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_mass_intention_occurrence (mass_date, mass_schedule_id, status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE prayer_requests (
@@ -491,7 +498,8 @@ INSERT INTO system_settings (setting_key, setting_value) VALUES
 ('gcash_qr_image', ''),
 ('gcash_account_name', ''),
 ('gcash_account_number', ''),
-('priest_booking_capacity', '2');
+('priest_booking_capacity', '2'),
+('mass_intention_cutoff_minutes', '30');
 
 CREATE TABLE audit_logs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
