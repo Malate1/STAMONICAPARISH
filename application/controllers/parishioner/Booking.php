@@ -53,9 +53,10 @@ class Booking extends Role_Controller
         $service = $this->ServiceType_model->find_by_key($service_key);
         if (!$service) show_404();
 
-        $data['service']        = $service;
-        $data['requirements']   = $this->ServiceType_model->requirements($service['id']);
-        $data['schedule_rules'] = $this->ServiceType_model->schedule_rules($service['id'], true);
+        $data['service']             = $service;
+        $data['requirements']        = $this->ServiceType_model->requirements($service['id']);
+        $data['schedule_rules']      = $this->ServiceType_model->schedule_rules($service['id'], true);
+        $data['active_priest_count'] = $this->Booking_model->active_priest_count();
         $this->render_app('parishioner/booking_form', $data, 'layouts/app_parishioner');
     }
 
@@ -83,20 +84,22 @@ class Booking extends Role_Controller
         if ($booking_type === 'special') {
             $date = $this->input->post('date', true);
 
-            // Without a date, return only dates that currently have at least
-            // one available time slot. This makes the UI availability-first
-            // instead of presenting an unrestricted date picker.
+            // Default casual-user flow: show actual date + time choices in one
+            // step instead of asking for a date and then making the user check
+            // whether that date still has an open time.
             if (!$date) {
-                $dates = $this->Booking_model->upcoming_special_dates($service_id, 12);
+                $slots = $this->Booking_model->upcoming_special_slots($service_id, 12);
                 return $this->json([
                     'success' => true,
-                    'dates' => $dates,
-                    'message' => empty($dates)
-                        ? 'No special-booking dates are currently available within the parish booking window.'
+                    'slots' => $slots,
+                    'message' => empty($slots)
+                        ? 'No special-booking schedules are currently available within the parish booking window.'
                         : '',
                 ]);
             }
 
+            // Retained for compatibility with any older UI/client that still
+            // requests the times for one specific date.
             $result = $this->Booking_model->special_slots_for_date($service_id, $date);
             return $this->json($result);
         }

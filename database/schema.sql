@@ -113,7 +113,9 @@ CREATE TABLE service_types (
     special_start_time TIME DEFAULT NULL,
     special_end_time TIME DEFAULT NULL,
     slot_interval_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 60,
+    booking_buffer_before_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    requires_priest BOOLEAN NOT NULL DEFAULT 1,
     min_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     max_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 365,
     requires_schedule BOOLEAN NOT NULL DEFAULT 1,
@@ -487,7 +489,8 @@ INSERT INTO system_settings (setting_key, setting_value) VALUES
 ('parish_contact', ''),
 ('gcash_qr_image', ''),
 ('gcash_account_name', ''),
-('gcash_account_number', '');
+('gcash_account_number', ''),
+('priest_booking_capacity', '2');
 
 CREATE TABLE audit_logs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -520,9 +523,10 @@ INSERT INTO service_types (service_key, name, category, description, base_fee, r
 ('counseling', 'Pastoral Counseling', 'service', 'Appointment for pastoral counseling.', 0.00, 1, 0, 'chat', 7);
 
 -- Availability defaults. Staff may change these in Service Configuration.
-UPDATE service_types SET allow_special_booking = 1, special_fee = 9000.00, uses_main_church = 1 WHERE service_key = 'wedding';
-UPDATE service_types SET allow_special_booking = 1, special_fee = base_fee, uses_main_church = 1 WHERE service_key = 'baptism';
-UPDATE service_types SET uses_main_church = 0 WHERE service_key IN ('house_blessing','vehicle_blessing','counseling');
+UPDATE service_types SET allow_special_booking = 1, special_fee = 9000.00, uses_main_church = 1, booking_buffer_before_minutes = 60, booking_buffer_minutes = 45, requires_priest = 1 WHERE service_key = 'wedding';
+UPDATE service_types SET allow_special_booking = 1, special_fee = base_fee, uses_main_church = 1, booking_buffer_before_minutes = 30, booking_buffer_minutes = 30, requires_priest = 1 WHERE service_key = 'baptism';
+UPDATE service_types SET booking_buffer_before_minutes = 30, booking_buffer_minutes = 30, requires_priest = 1 WHERE service_key = 'funeral';
+UPDATE service_types SET uses_main_church = 0, requires_priest = 1 WHERE service_key IN ('house_blessing','vehicle_blessing','counseling');
 
 INSERT INTO service_schedule_rules (service_type_id, rule_name, day_of_week, week_numbers, start_time, fee_amount, capacity, is_active, display_order)
 SELECT id, 'Free Wedding - 2nd & 4th Thursday', 4, '2,4', '06:00:00', 0.00, 1, 1, 10 FROM service_types WHERE service_key = 'wedding';

@@ -91,6 +91,10 @@ class Booking extends Role_Controller
         if (!$booking) return $this->json(['success' => false, 'message' => 'Not found.']);
 
         if ($confirmed_date) {
+            if (!empty($booking['requires_priest']) && !$priest_id) {
+                return $this->json(['success' => false, 'message' => 'Select an available priest before confirming this schedule.']);
+            }
+
             // If staff changes the reserved schedule, validate it against the same
             // availability rules used by parishioners and against other church bookings.
             $current_normalized = $booking['confirmed_date'] ? date('Y-m-d H:i:s', strtotime($booking['confirmed_date'])) : null;

@@ -19,6 +19,15 @@
   </div>
 
   <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+    <h2 class="font-semibold text-gray-800">Booking Capacity</h2>
+    <div>
+      <label class="text-xs font-medium text-gray-500">Priests Available for Concurrent Bookings</label>
+      <input type="number" min="1" max="10" name="priest_booking_capacity" value="<?= html_escape($settings['priest_booking_capacity'] ?? '2') ?>" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm">
+      <p class="text-[11px] text-gray-400 mt-1">Current parish setup: 2 priests. The booking engine will never offer more simultaneous priest-required services than this capacity or the number of active priest accounts, whichever is lower.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
     <h2 class="font-semibold text-gray-800">GCash Configuration</h2>
     <div>
       <label class="text-xs font-medium text-gray-500">Account Name</label>

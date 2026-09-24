@@ -8,8 +8,10 @@ ALTER TABLE service_types
   ADD COLUMN special_start_time TIME NULL AFTER special_fee,
   ADD COLUMN special_end_time TIME NULL AFTER special_start_time,
   ADD COLUMN slot_interval_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 60 AFTER special_end_time,
-  ADD COLUMN booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER slot_interval_minutes,
-  ADD COLUMN min_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER booking_buffer_minutes,
+  ADD COLUMN booking_buffer_before_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER slot_interval_minutes,
+  ADD COLUMN booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER booking_buffer_before_minutes,
+  ADD COLUMN requires_priest TINYINT(1) NOT NULL DEFAULT 1 AFTER booking_buffer_minutes,
+  ADD COLUMN min_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER requires_priest,
   ADD COLUMN max_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 365 AFTER min_advance_days;
 
 CREATE TABLE service_schedule_rules (
@@ -46,7 +48,10 @@ ALTER TABLE service_bookings
 UPDATE service_types
 SET allow_special_booking = 1,
     special_fee = 9000.00,
-    uses_main_church = 1
+    uses_main_church = 1,
+    booking_buffer_before_minutes = 60,
+    booking_buffer_minutes = 45,
+    requires_priest = 1
 WHERE service_key = 'wedding';
 
 INSERT INTO service_schedule_rules
@@ -62,7 +67,10 @@ WHERE service_key = 'wedding';
 UPDATE service_types
 SET allow_special_booking = 1,
     special_fee = base_fee,
-    uses_main_church = 1
+    uses_main_church = 1,
+    booking_buffer_before_minutes = 30,
+    booking_buffer_minutes = 30,
+    requires_priest = 1
 WHERE service_key = 'baptism';
 
 INSERT INTO service_schedule_rules
@@ -73,8 +81,19 @@ WHERE service_key = 'baptism';
 
 -- Suggested resource behavior for services normally performed away from the main church.
 UPDATE service_types
-SET uses_main_church = 0
+SET booking_buffer_before_minutes = 30,
+    booking_buffer_minutes = 30,
+    requires_priest = 1
+WHERE service_key = 'funeral';
+
+UPDATE service_types
+SET uses_main_church = 0,
+    requires_priest = 1
 WHERE service_key IN ('house_blessing', 'vehicle_blessing', 'counseling');
+
+INSERT INTO system_settings (setting_key, setting_value)
+SELECT 'priest_booking_capacity', '2'
+WHERE NOT EXISTS (SELECT 1 FROM system_settings WHERE setting_key = 'priest_booking_capacity');
 
 -- IMPORTANT:
 -- Configure special_start_time / special_end_time for Wedding and Baptism in the

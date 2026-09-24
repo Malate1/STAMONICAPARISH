@@ -46,6 +46,11 @@ $weeks_label = static function ($value) {
             <i class="ph ph-sparkle"></i> Special booking <?= peso($service['special_fee']) ?>
           </span>
         <?php endif; ?>
+        <?php if (!empty($service['requires_priest'])): ?>
+          <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 border border-white/10 text-white/80 text-xs font-semibold">
+            <i class="ph ph-users"></i> <?= (int) $active_priest_count ?> active priest<?= (int) $active_priest_count === 1 ? '' : 's' ?>
+          </span>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -104,10 +109,10 @@ $weeks_label = static function ($value) {
               <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl flex-shrink-0"><i class="ph ph-calendar-heart"></i></div>
               <div class="flex-1">
                 <div class="flex items-center justify-between gap-3">
-                  <h3 class="font-semibold text-gray-900">Regular / Parish Schedule</h3>
+                  <h3 class="font-semibold text-gray-900">Parish Regular Schedule</h3>
                   <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold">FREE / SET FEE</span>
                 </div>
-                <p class="text-xs text-gray-500 mt-2 leading-relaxed">Choose from recurring dates published by the parish office. These slots use the configured regular schedule and fee.</p>
+                <p class="text-xs text-gray-500 mt-2 leading-relaxed">Choose this if one of the parish’s regular date-and-time schedules works for you. The published regular fee applies, including FREE schedules.</p>
               </div>
             </div>
           </button>
@@ -119,14 +124,24 @@ $weeks_label = static function ($value) {
               <div class="w-11 h-11 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center text-xl flex-shrink-0"><i class="ph ph-sparkle"></i></div>
               <div class="flex-1">
                 <div class="flex items-center justify-between gap-3">
-                  <h3 class="font-semibold text-gray-900">Special Booking</h3>
+                  <h3 class="font-semibold text-gray-900">Other Available Date &amp; Time</h3>
                   <span class="px-2.5 py-1 rounded-full bg-gold-100 text-gold-700 text-[11px] font-bold"><?= peso($service['special_fee']) ?></span>
                 </div>
-                <p class="text-xs text-gray-500 mt-2 leading-relaxed">Choose another eligible date and then select from available times configured by the parish.</p>
+                <p class="text-xs text-gray-500 mt-2 leading-relaxed">Need a different schedule? Pick another open date and time directly. The parish’s Special Booking fee applies.</p>
               </div>
             </div>
           </button>
           <?php endif; ?>
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5">
+          <div class="flex gap-3">
+            <div class="w-10 h-10 rounded-xl bg-white text-blue-700 flex items-center justify-center flex-shrink-0"><i class="ph ph-shield-check text-xl"></i></div>
+            <div class="text-xs text-blue-900/80 leading-relaxed">
+              <div class="font-semibold text-blue-900">We protect more than just the ceremony time.</div>
+              <p class="mt-1">Choose the ceremony start you prefer. The system also reserves the configured preparation time before and clearance time after it, checks the Main Church calendar, and verifies that one of the <?= (int) $active_priest_count ?> available priest<?= (int) $active_priest_count === 1 ? '' : 's' ?> can serve the schedule.</p>
+            </div>
+          </div>
         </div>
 
         <?php if ($has_regular): ?>
@@ -167,43 +182,27 @@ $weeks_label = static function ($value) {
           <div class="rounded-2xl border border-gold-100 bg-gold-50/35 p-4 sm:p-5 mb-5">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <div class="text-[11px] uppercase tracking-wider font-semibold text-gold-700">Availability-first special booking</div>
-                <p class="text-xs text-gray-500 mt-1">Only dates with at least one open church time are shown. Regular parish-schedule dates and conflicting sacramental bookings are excluded automatically.</p>
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-gold-700">Available special schedules</div>
+                <p class="text-xs text-gray-500 mt-1">Each choice already includes both the date and time. Conflicting Main Church reservations and unavailable priests are removed automatically.</p>
               </div>
               <div class="text-sm font-bold text-gold-800 whitespace-nowrap"><?= peso($service['special_fee']) ?> special fee</div>
             </div>
           </div>
 
-          <div class="grid lg:grid-cols-[1fr_.95fr] gap-5 items-start">
+          <div class="flex items-center justify-between gap-3 mb-3">
             <div>
-              <div class="flex items-center justify-between gap-3 mb-3">
-                <div>
-                  <h3 class="text-sm font-semibold text-gray-800">Next available special dates</h3>
-                  <p class="text-xs text-gray-400 mt-0.5">Choose from dates that currently have an open slot.</p>
-                </div>
-                <button type="button" onclick="loadSpecialDates()" class="text-xs font-semibold text-parish-700 hover:text-parish-900"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
-              </div>
-              <div id="special-dates" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-              <div id="special-date-message" class="hidden rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500"></div>
+              <h3 class="text-sm font-semibold text-gray-800">Next available date &amp; time</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Tap one schedule to reserve it while your application is reviewed.</p>
             </div>
-
-            <div class="lg:sticky lg:top-24">
-              <div class="flex items-center justify-between gap-3 mb-3">
-                <div>
-                  <h3 class="text-sm font-semibold text-gray-800">Available times</h3>
-                  <p id="special-time-help" class="text-xs text-gray-400 mt-0.5">Choose an available date first.</p>
-                </div>
-              </div>
-              <div id="special-slots" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-              <div id="special-message" class="rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500">
-                Select one of the available dates to see its open times.
-              </div>
-            </div>
+            <button type="button" onclick="loadSpecialSchedules()" class="text-xs font-semibold text-parish-700 hover:text-parish-900"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
           </div>
+          <div id="special-slots" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          <div id="special-message" class="hidden rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500"></div>
         </div>
 
         <!-- Selection summary -->
-        <div id="schedule-summary" class="hidden mt-6 rounded-2xl bg-parish-900 text-white p-5">
+        <div id="schedule-advisory" class="hidden mt-6"></div>
+        <div id="schedule-summary" class="hidden mt-4 rounded-2xl bg-parish-900 text-white p-5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-center gap-4">
               <div class="w-11 h-11 rounded-xl bg-white/10 text-gold-300 flex items-center justify-center text-xl"><i class="ph ph-calendar-check"></i></div>
@@ -509,44 +508,109 @@ function setBookingType(type){
   } else {
     $('#type-special').addClass('border-gold-400 bg-gold-50');
     $('#special-panel').removeClass('hidden');
-    loadSpecialDates();
+    loadSpecialSchedules();
   }
 }
 
 function renderSlotButton(slot, type){
   var feeText = Number(slot.fee || 0) === 0 ? 'FREE' : peso(slot.fee);
   var remaining = parseInt(slot.remaining || 1, 10);
+  var nearby = Array.isArray(slot.nearby_bookings) ? slot.nearby_bookings : [];
   var capacityText = parseInt(slot.capacity || 1,10) > 1
     ? '<div class="text-[10px] text-gray-400 mt-1">' + remaining + ' place' + (remaining === 1 ? '' : 's') + ' left</div>'
     : '';
+  var protectedText = slot.reserved_from && slot.reserved_until
+    ? '<div class="text-[10px] text-gray-500 mt-2 flex items-center gap-1"><i class="ph ph-shield-check text-parish-600"></i> Church protected ' + escapeHtml(slot.reserved_from) + '–' + escapeHtml(slot.reserved_until) + '</div>'
+    : '';
+  var priestText = parseInt(slot.priest_total || 0,10) > 0
+    ? '<div class="text-[10px] text-gray-500 mt-1 flex items-center gap-1"><i class="ph ph-users text-parish-600"></i> Priest checked · ' + escapeHtml(slot.priests_available_for_slot) + ' of ' + escapeHtml(slot.priest_total) + ' available</div>'
+    : '';
+  var nearbyText = nearby.length
+    ? '<div class="mt-2 rounded-lg bg-amber-50 border border-amber-100 px-2.5 py-2 text-[10px] font-medium text-amber-800"><i class="ph ph-info mr-1"></i> Another church service is scheduled nearby</div>'
+    : '';
 
-  return '<button type="button" class="available-slot text-left rounded-xl border border-gray-200 bg-white p-4 hover:border-parish-300 hover:shadow-sm transition" ' +
+  return '<button type="button" class="available-slot text-left rounded-2xl border border-gray-200 bg-white p-4 hover:border-parish-300 hover:shadow-sm transition" ' +
     'data-type="' + escapeHtml(type) + '" ' +
     'data-datetime="' + escapeHtml(slot.datetime) + '" ' +
     'data-rule="' + escapeHtml(slot.schedule_rule_id || '') + '" ' +
     'data-fee="' + escapeHtml(slot.fee) + '" ' +
     'data-date-label="' + escapeHtml(slot.date_label) + '" ' +
-    'data-time="' + escapeHtml(slot.time) + '">' +
-      '<div class="flex items-center justify-between gap-2">' +
-        '<div class="text-sm font-semibold text-gray-800">' + escapeHtml(slot.date_label) + '</div>' +
+    'data-time="' + escapeHtml(slot.time) + '" ' +
+    'data-reserved-from="' + escapeHtml(slot.reserved_from || '') + '" ' +
+    'data-reserved-until="' + escapeHtml(slot.reserved_until || '') + '" ' +
+    'data-priest-total="' + escapeHtml(slot.priest_total || 0) + '" ' +
+    'data-priests-available="' + escapeHtml(slot.priests_available_for_slot || 0) + '" ' +
+    'data-nearby="' + escapeHtml(encodeURIComponent(JSON.stringify(nearby))) + '">' +
+      '<div class="flex items-start justify-between gap-2">' +
+        '<div>' +
+          '<div class="text-sm font-semibold text-gray-800">' + escapeHtml(slot.date_label) + '</div>' +
+          '<div class="text-xl font-bold text-parish-800 mt-1">' + escapeHtml(slot.time) + '</div>' +
+        '</div>' +
         '<span class="text-[10px] font-bold px-2 py-1 rounded-full ' + (Number(slot.fee || 0) === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gold-100 text-gold-700') + '">' + feeText + '</span>' +
       '</div>' +
-      '<div class="text-lg font-bold text-parish-800 mt-2">' + escapeHtml(slot.time) + '</div>' +
-      '<div class="text-[11px] text-gray-400 mt-1">' + escapeHtml(slot.rule_name || (type === 'regular' ? 'Regular Schedule' : 'Special Booking')) + '</div>' +
-      capacityText +
+      '<div class="text-[11px] text-gray-400 mt-2">' + escapeHtml(slot.rule_name || (type === 'regular' ? 'Regular Schedule' : 'Special Booking')) + '</div>' +
+      protectedText + priestText + capacityText + nearbyText +
     '</button>';
+}
+
+function renderScheduleAdvisory(slot){
+  var nearby = Array.isArray(slot.nearby_bookings) ? slot.nearby_bookings : [];
+  var $box = $('#schedule-advisory').empty();
+
+  if(!nearby.length){
+    $box.addClass('hidden');
+    return;
+  }
+
+  var html = '<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">' +
+    '<div class="flex gap-3">' +
+      '<div class="w-10 h-10 rounded-xl bg-white text-amber-700 flex items-center justify-center flex-shrink-0"><i class="ph ph-info text-xl"></i></div>' +
+      '<div class="min-w-0 flex-1">' +
+        '<div class="font-semibold text-amber-900 text-sm">Another church service is scheduled nearby</div>' +
+        '<p class="text-xs text-amber-800/80 mt-1">Your selected time is still available. This notice helps you plan arrival, pictorials, and departure without being surprised by the next parish activity.</p>' +
+        '<div class="mt-3 space-y-2">';
+
+  nearby.forEach(function(item){
+    if(item.direction === 'after'){
+      html += '<div class="rounded-xl bg-white/75 border border-amber-100 px-3 py-2.5 text-xs text-gray-700">' +
+        '<strong>' + escapeHtml(item.service_name) + '</strong> is scheduled after you at <strong>' + escapeHtml(item.ceremony_time) + '</strong>. ' +
+        'Your protected church time ends at <strong>' + escapeHtml(slot.reserved_until) + '</strong>' +
+        (item.reserved_from ? ', while the next protected church time begins at <strong>' + escapeHtml(item.reserved_from) + '</strong>.' : '.') +
+      '</div>';
+    } else {
+      html += '<div class="rounded-xl bg-white/75 border border-amber-100 px-3 py-2.5 text-xs text-gray-700">' +
+        '<strong>' + escapeHtml(item.service_name) + '</strong> is scheduled before you at <strong>' + escapeHtml(item.ceremony_time) + '</strong>. ' +
+        'Its protected church time ends at <strong>' + escapeHtml(item.reserved_until) + '</strong>, before your protected time begins at <strong>' + escapeHtml(slot.reserved_from) + '</strong>.' +
+      '</div>';
+    }
+  });
+
+  html += '</div></div></div></div>';
+  $box.html(html).removeClass('hidden');
 }
 
 function bindSlotButtons(){
   $('.available-slot').off('click').on('click', function(){
     var $btn = $(this);
+    var nearby = [];
+    try {
+      nearby = JSON.parse(decodeURIComponent(String($btn.attr('data-nearby') || '%5B%5D')));
+    } catch(e) {
+      nearby = [];
+    }
+
     selectedSlot = {
       booking_type: $btn.data('type'),
       datetime: $btn.data('datetime'),
       schedule_rule_id: $btn.data('rule') || '',
       fee: Number($btn.data('fee') || 0),
       date_label: $btn.data('date-label'),
-      time: $btn.data('time')
+      time: $btn.data('time'),
+      reserved_from: $btn.data('reserved-from') || '',
+      reserved_until: $btn.data('reserved-until') || '',
+      priest_total: Number($btn.data('priest-total') || 0),
+      priests_available_for_slot: Number($btn.data('priests-available') || 0),
+      nearby_bookings: nearby
     };
 
     $('.available-slot').removeClass('border-parish-600 ring-2 ring-parish-100 bg-parish-50');
@@ -557,11 +621,16 @@ function bindSlotButtons(){
     $('#schedule-rule-id').val(selectedSlot.schedule_rule_id);
 
     var typeLabel = selectedSlot.booking_type === 'regular' ? 'Regular / Parish Schedule' : 'Special Booking';
+    var protectedLabel = selectedSlot.reserved_from && selectedSlot.reserved_until
+      ? ' · Protected ' + selectedSlot.reserved_from + '–' + selectedSlot.reserved_until
+      : '';
+
     $('#selected-schedule-label').text(selectedSlot.date_label + ' · ' + selectedSlot.time);
-    $('#selected-schedule-meta').text(typeLabel + ' · ' + (selectedSlot.fee === 0 ? 'FREE' : peso(selectedSlot.fee)));
-    $('#review-schedule').text(selectedSlot.date_label + ' · ' + selectedSlot.time);
+    $('#selected-schedule-meta').text(typeLabel + ' · ' + (selectedSlot.fee === 0 ? 'FREE' : peso(selectedSlot.fee)) + protectedLabel);
+    $('#review-schedule').text(selectedSlot.date_label + ' · ' + selectedSlot.time + protectedLabel);
     $('#review-type').text(typeLabel);
     $('#review-fee').text(selectedSlot.fee === 0 ? 'FREE' : peso(selectedSlot.fee));
+    renderScheduleAdvisory(selectedSlot);
     $('#schedule-summary').removeClass('hidden');
     $('#step1-next').prop('disabled', false);
     $('#submit-booking').prop('disabled', false);
@@ -573,7 +642,8 @@ function clearSlotSelection(){
   selectedSlot = null;
   $('#schedule-start, #schedule-rule-id').val('');
   $('.available-slot').removeClass('border-parish-600 ring-2 ring-parish-100 bg-parish-50');
-  $('#schedule-summary').addClass('hidden');
+  $('#schedule-summary, #schedule-advisory').addClass('hidden');
+  $('#schedule-advisory').empty();
   $('#review-schedule').text('Schedule not selected');
   $('#review-type, #review-fee').text('—');
   $('#step1-next').prop('disabled', true);
@@ -610,63 +680,15 @@ function loadRegularSlots(){
   });
 }
 
-function loadSpecialDates(){
+function loadSpecialSchedules(){
   clearSlotSelection();
   $('#booking-type').val('special');
-  $('#special-dates').html('<div class="col-span-2 sm:col-span-3 py-8 text-center text-sm text-gray-400"><i class="ph ph-spinner-gap animate-spin mr-1"></i> Checking available dates…</div>');
-  $('#special-date-message').addClass('hidden');
-  $('#special-slots').empty();
-  $('#special-message').removeClass('hidden').text('Select one of the available dates to see its open times.');
-  $('#special-time-help').text('Choose an available date first.');
+  $('#special-slots').html('<div class="sm:col-span-2 lg:col-span-3 py-8 text-center text-sm text-gray-400"><i class="ph ph-spinner-gap animate-spin mr-1"></i> Finding available date-and-time schedules…</div>');
+  $('#special-message').addClass('hidden');
 
   $.post('<?= site_url('my/bookings/availability') ?>', {
     service_type_id: <?= (int) $service['id'] ?>,
     booking_type: 'special'
-  }, function(res){
-    $('#special-dates').empty();
-    if(res.success && res.dates && res.dates.length){
-      res.dates.forEach(function(item){
-        $('#special-dates').append(
-          '<button type="button" class="available-special-date text-left rounded-xl border border-gray-200 bg-white p-4 hover:border-gold-300 hover:shadow-sm transition" data-date="' + escapeHtml(item.date) + '" data-label="' + escapeHtml(item.date_label) + '">' +
-            '<div class="flex items-center gap-3">' +
-              '<div class="w-12 h-12 rounded-xl bg-gold-50 text-gold-700 flex flex-col items-center justify-center flex-shrink-0">' +
-                '<span class="text-[9px] uppercase font-bold">' + escapeHtml(item.month_label) + '</span>' +
-                '<span class="text-xl font-bold leading-none">' + escapeHtml(item.day_number) + '</span>' +
-              '</div>' +
-              '<div class="min-w-0">' +
-                '<div class="text-sm font-semibold text-gray-800">' + escapeHtml(item.date_label) + '</div>' +
-                '<div class="text-[11px] text-gray-400 mt-1">' + escapeHtml(item.available_count) + ' open time' + (parseInt(item.available_count,10) === 1 ? '' : 's') + '</div>' +
-              '</div>' +
-            '</div>' +
-          '</button>'
-        );
-      });
-
-      $('.available-special-date').off('click').on('click', function(){
-        $('.available-special-date').removeClass('border-gold-500 ring-2 ring-gold-100 bg-gold-50');
-        $(this).addClass('border-gold-500 ring-2 ring-gold-100 bg-gold-50');
-        loadSpecialSlots($(this).data('date'), $(this).data('label'));
-      });
-    } else {
-      $('#special-date-message').removeClass('hidden').text(res.message || 'No special-booking dates are currently available.');
-    }
-  }).fail(function(){
-    $('#special-dates').empty();
-    $('#special-date-message').removeClass('hidden').text('Unable to check available dates. Please try again.');
-  });
-}
-
-function loadSpecialSlots(date, dateLabel){
-  clearSlotSelection();
-  $('#booking-type').val('special');
-  $('#special-slots').html('<div class="col-span-2 sm:col-span-3 py-8 text-center text-sm text-gray-400"><i class="ph ph-spinner-gap animate-spin mr-1"></i> Checking church calendar…</div>');
-  $('#special-message').addClass('hidden');
-  $('#special-time-help').text('Open times for ' + dateLabel);
-
-  $.post('<?= site_url('my/bookings/availability') ?>', {
-    service_type_id: <?= (int) $service['id'] ?>,
-    booking_type: 'special',
-    date: date
   }, function(res){
     $('#special-slots').empty();
     if(res.success && res.slots && res.slots.length){
@@ -675,8 +697,7 @@ function loadSpecialSlots(date, dateLabel){
       });
       bindSlotButtons();
     } else {
-      $('#special-message').removeClass('hidden').text(res.message || 'No available times remain on this date. Please choose another date.');
-      loadSpecialDates();
+      $('#special-message').removeClass('hidden').text(res.message || 'No special-booking schedules are currently available.');
     }
   }).fail(function(){
     $('#special-slots').empty();
@@ -703,11 +724,26 @@ $('#booking-form').on('submit', function(e){
 
   var scheduleText = selectedSlot.date_label + ' at ' + selectedSlot.time;
   var feeText = selectedSlot.fee === 0 ? 'FREE' : peso(selectedSlot.fee);
+  var confirmHtml = '<div class="text-sm text-gray-600">' +
+    'Ceremony schedule: <strong>' + escapeHtml(scheduleText) + '</strong><br>' +
+    'Booking fee: <strong>' + escapeHtml(feeText) + '</strong>';
+
+  if(selectedSlot.reserved_from && selectedSlot.reserved_until){
+    confirmHtml += '<br>Protected church time: <strong>' + escapeHtml(selectedSlot.reserved_from) + '–' + escapeHtml(selectedSlot.reserved_until) + '</strong>';
+  }
+
+  if(selectedSlot.nearby_bookings && selectedSlot.nearby_bookings.length){
+    confirmHtml += '<div class="mt-3 rounded-lg bg-amber-50 border border-amber-100 p-3 text-left text-xs text-amber-800">' +
+      '<strong>Planning note:</strong> another church service is scheduled nearby. Review the notice shown above before submitting.' +
+    '</div>';
+  }
+
+  confirmHtml += '</div>';
 
   Swal.fire({
     icon:'question',
     title:'Submit this booking?',
-    html:'<div class="text-sm text-gray-600">Schedule: <strong>' + escapeHtml(scheduleText) + '</strong><br>Booking fee: <strong>' + escapeHtml(feeText) + '</strong></div>',
+    html:confirmHtml,
     showCancelButton:true,
     confirmButtonText:'Submit Application',
     confirmButtonColor:'#235a38',
@@ -743,7 +779,7 @@ $('#booking-form').on('submit', function(e){
         if(res.message && res.message.toLowerCase().indexOf('available') !== -1){
           clearSlotSelection();
           if(currentBookingType === 'regular') loadRegularSlots();
-          else loadSpecialDates();
+          else loadSpecialSchedules();
         }
       }
     }).fail(function(){

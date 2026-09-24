@@ -28,6 +28,8 @@ class Booking_model extends CI_Model
     public function get($id)
     {
         return $this->db->select('service_bookings.*, service_types.name as service_name, service_types.service_key, service_types.icon,
+                service_types.duration_minutes, service_types.booking_buffer_before_minutes, service_types.booking_buffer_minutes,
+                service_types.uses_main_church, service_types.requires_priest,
                 users.first_name, users.last_name, users.email, users.mobile_number,
                 priest.first_name as priest_first_name, priest.last_name as priest_last_name')
             ->from($this->table)
@@ -127,7 +129,15 @@ class Booking_model extends CI_Model
 
     public function priests_list()
     {
-        return $this->db->where('role_id', ROLE_PRIEST)->where('status', 'active')->get('users')->result_array();
+        return $this->db->where('role_id', ROLE_PRIEST)->where('status', 'active')->order_by('last_name')->get('users')->result_array();
+    }
+
+    public function active_priest_count()
+    {
+        $active = (int) $this->db->where('role_id', ROLE_PRIEST)->where('status', 'active')->count_all_results('users');
+        $row = $this->db->get_where('system_settings', ['setting_key' => 'priest_booking_capacity'])->row_array();
+        $capacity = $row ? max(1, (int) $row['setting_value']) : 2;
+        return min($active, $capacity);
     }
 
     /**
@@ -177,6 +187,12 @@ class Booking_model extends CI_Model
                     'fee' => (float) $rule['fee_amount'],
                     'capacity' => (int) $rule['capacity'],
                     'remaining' => $availability['remaining'],
+                    'reserved_from' => $availability['reserved_from'],
+                    'reserved_until' => $availability['reserved_until'],
+                    'nearby_bookings' => $availability['nearby_bookings'],
+                    'priest_total' => $availability['priest_total'],
+                    'priests_available_for_slot' => $availability['priests_available_for_slot'],
+                    'priests_remaining_after_booking' => $availability['priests_remaining_after_booking'],
                 ];
 
                 if (count($slots) >= $limit) break;
@@ -236,6 +252,46 @@ class Booking_model extends CI_Model
     }
 
     /**
+     * Return the next actual date+time choices for Special Booking.
+     * Casual users should not have to pick a date first and then discover
+     * whether a time is available.
+     */
+    public function upcoming_special_slots($service_type_id, $limit = 12)
+    {
+        $service = $this->db->get_where('service_types', ['id' => $service_type_id, 'is_active' => 1])->row_array();
+        if (!$service || empty($service['allow_special_booking'])) return [];
+        if (empty($service['special_start_time']) || empty($service['special_end_time'])) return [];
+
+        $min_days = max(0, (int) ($service['min_advance_days'] ?? 1));
+        $max_days = max($min_days, (int) ($service['max_advance_days'] ?? 365));
+        $cursor = (new DateTimeImmutable(date('Y-m-d')))->modify('+' . $min_days . ' day');
+        $end = (new DateTimeImmutable(date('Y-m-d')))->modify('+' . $max_days . ' day');
+        $slots = [];
+
+        while ($cursor <= $end && count($slots) < $limit) {
+            $date = $cursor->format('Y-m-d');
+
+            if (!$this->date_matches_any_regular_rule($service_type_id, $date)) {
+                $result = $this->special_slots_for_date($service_type_id, $date);
+                if (!empty($result['success']) && !empty($result['slots'])) {
+                    foreach ($result['slots'] as $slot) {
+                        $slots[] = $slot;
+                        if (count($slots) >= $limit) break;
+                    }
+                }
+            }
+
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        usort($slots, function ($a, $b) {
+            return strcmp($a['datetime'], $b['datetime']);
+        });
+
+        return array_slice($slots, 0, $limit);
+    }
+
+    /**
      * Generate special-booking time slots for a date selected by the parishioner.
      */
     public function special_slots_for_date($service_type_id, $date)
@@ -274,15 +330,18 @@ class Booking_model extends CI_Model
         }
 
         $interval = max(15, (int) ($service['slot_interval_minutes'] ?? 60));
+        $before = max(0, (int) ($service['booking_buffer_before_minutes'] ?? 0));
         $duration = max(15, (int) ($service['duration_minutes'] ?? 60));
-        $start = new DateTimeImmutable($date . ' ' . $service['special_start_time']);
-        $end = new DateTimeImmutable($date . ' ' . $service['special_end_time']);
+        $after = max(0, (int) ($service['booking_buffer_minutes'] ?? 0));
+        $window_start = new DateTimeImmutable($date . ' ' . $service['special_start_time']);
+        $window_end = new DateTimeImmutable($date . ' ' . $service['special_end_time']);
+        $first_ceremony = $window_start->modify('+' . $before . ' minutes');
         $slots = [];
 
-        for ($cursor = $start; $cursor < $end; $cursor = $cursor->modify('+' . $interval . ' minutes')) {
+        for ($cursor = $first_ceremony; $cursor < $window_end; $cursor = $cursor->modify('+' . $interval . ' minutes')) {
             if ($cursor->getTimestamp() <= time()) continue;
-            $slot_end = $cursor->modify('+' . $duration . ' minutes');
-            if ($slot_end > $end) break;
+            $protected_end = $cursor->modify('+' . ($duration + $after) . ' minutes');
+            if ($protected_end > $window_end) break;
 
             $availability = $this->check_slot_availability($service, $cursor->format('Y-m-d H:i:s'), null, null);
             if (!$availability['available']) continue;
@@ -299,6 +358,12 @@ class Booking_model extends CI_Model
                 'fee' => (float) $service['special_fee'],
                 'capacity' => 1,
                 'remaining' => 1,
+                'reserved_from' => $availability['reserved_from'],
+                'reserved_until' => $availability['reserved_until'],
+                'nearby_bookings' => $availability['nearby_bookings'],
+                'priest_total' => $availability['priest_total'],
+                'priests_available_for_slot' => $availability['priests_available_for_slot'],
+                'priests_remaining_after_booking' => $availability['priests_remaining_after_booking'],
             ];
         }
 
@@ -368,14 +433,18 @@ class Booking_model extends CI_Model
         $slot_time = date('H:i:s', $timestamp);
         $open = strtotime($date . ' ' . $service['special_start_time']);
         $close = strtotime($date . ' ' . $service['special_end_time']);
+        $before = max(0, (int) ($service['booking_buffer_before_minutes'] ?? 0));
         $duration = max(15, (int) ($service['duration_minutes'] ?? 60));
-        $slot_end = $timestamp + ($duration * 60);
-        if ($timestamp < $open || $slot_end > $close) {
-            return ['valid' => false, 'message' => 'That time is outside the parish special-booking hours.'];
+        $after = max(0, (int) ($service['booking_buffer_minutes'] ?? 0));
+        $protected_start = $timestamp - ($before * 60);
+        $protected_end = $timestamp + (($duration + $after) * 60);
+        if ($protected_start < $open || $protected_end > $close) {
+            return ['valid' => false, 'message' => 'That time does not leave enough protected preparation/clearance time inside the parish special-booking hours.'];
         }
 
         $interval = max(15, (int) ($service['slot_interval_minutes'] ?? 60));
-        $offset_minutes = (int) (($timestamp - $open) / 60);
+        $first_ceremony = $open + ($before * 60);
+        $offset_minutes = (int) (($timestamp - $first_ceremony) / 60);
         if ($offset_minutes % $interval !== 0) {
             return ['valid' => false, 'message' => 'Please select one of the available time slots shown.'];
         }
@@ -401,14 +470,29 @@ class Booking_model extends CI_Model
         if (!$priest_id || !$schedule_start) return false;
 
         $service = $this->db->get_where('service_types', ['id' => $service_type_id])->row_array();
-        if (!$service) return false;
+        if (!$service || empty($service['requires_priest'])) return false;
 
         $start_ts = strtotime($schedule_start);
         if (!$start_ts) return false;
-        $end_ts = $start_ts + (max(15, (int) $service['duration_minutes']) * 60);
+
+        $candidate_before = max(0, (int) ($service['booking_buffer_before_minutes'] ?? 0));
+        $candidate_duration = max(15, (int) ($service['duration_minutes'] ?? 60));
+        $candidate_after = max(0, (int) ($service['booking_buffer_minutes'] ?? 0));
+        $candidate_window_start = $start_ts - ($candidate_before * 60);
+        $candidate_window_end = $start_ts + (($candidate_duration + $candidate_after) * 60);
         $date = date('Y-m-d', $start_ts);
 
-        $this->db->select('service_bookings.id, service_bookings.confirmed_date, service_types.name AS service_name, service_types.duration_minutes')
+        $candidate_rule_id = null;
+        if ($exclude_booking_id) {
+            $candidate_booking = $this->db->select('schedule_rule_id')
+                ->get_where('service_bookings', ['id' => (int) $exclude_booking_id])->row_array();
+            $candidate_rule_id = $candidate_booking['schedule_rule_id'] ?? null;
+        }
+
+        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.schedule_rule_id,
+                service_bookings.confirmed_date, service_types.name AS service_name,
+                service_types.duration_minutes, service_types.booking_buffer_before_minutes,
+                service_types.booking_buffer_minutes')
             ->from('service_bookings')
             ->join('service_types', 'service_types.id = service_bookings.service_type_id')
             ->where('service_bookings.assigned_priest_id', (int) $priest_id)
@@ -422,8 +506,20 @@ class Booking_model extends CI_Model
 
         foreach ($this->db->get()->result_array() as $row) {
             $existing_start = strtotime($row['confirmed_date']);
-            $existing_end = $existing_start + (max(15, (int) $row['duration_minutes']) * 60);
-            if ($start_ts < $existing_end && $end_ts > $existing_start) {
+
+            $same_group_event = $candidate_rule_id
+                && (int) $row['service_type_id'] === (int) $service_type_id
+                && (int) $row['schedule_rule_id'] === (int) $candidate_rule_id
+                && $existing_start === $start_ts;
+            if ($same_group_event) continue;
+
+            $existing_before = max(0, (int) ($row['booking_buffer_before_minutes'] ?? 0));
+            $existing_duration = max(15, (int) ($row['duration_minutes'] ?? 60));
+            $existing_after = max(0, (int) ($row['booking_buffer_minutes'] ?? 0));
+            $existing_window_start = $existing_start - ($existing_before * 60);
+            $existing_window_end = $existing_start + (($existing_duration + $existing_after) * 60);
+
+            if ($candidate_window_start < $existing_window_end && $candidate_window_end > $existing_window_start) {
                 return $row;
             }
         }
@@ -473,18 +569,44 @@ class Booking_model extends CI_Model
     }
 
     /**
-     * Cross-service overlap check for resources using the Main Church.
-     * Recurring group slots can accept more than one booking up to rule capacity.
+     * Cross-service availability check.
+     *
+     * Main Church is one shared resource. Every booking can protect time before
+     * the ceremony, the ceremony itself, and clearance time afterward.
+     *
+     * Services that require a priest also consume one of the currently active
+     * parish priests. Group regular schedules share one priest/event.
      */
     private function check_slot_availability(array $service, $schedule_start, $rule = null, $exclude_booking_id = null)
     {
         $start_ts = strtotime($schedule_start);
+        if (!$start_ts) {
+            return [
+                'available' => false,
+                'remaining' => 0,
+                'message' => 'Please choose a valid schedule.',
+                'reserved_from' => null,
+                'reserved_until' => null,
+                'nearby_bookings' => [],
+                'priest_total' => 0,
+                'priests_available_for_slot' => 0,
+                'priests_remaining_after_booking' => 0,
+            ];
+        }
+
+        $before = max(0, (int) ($service['booking_buffer_before_minutes'] ?? 0));
         $duration = max(15, (int) ($service['duration_minutes'] ?? 60));
-        $buffer = max(0, (int) ($service['booking_buffer_minutes'] ?? 0));
-        $end_ts = $start_ts + (($duration + $buffer) * 60);
+        $after = max(0, (int) ($service['booking_buffer_minutes'] ?? 0));
+
+        $window_start = $start_ts - ($before * 60);
+        $window_end = $start_ts + (($duration + $after) * 60);
         $date = date('Y-m-d', $start_ts);
 
-        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.schedule_rule_id, service_bookings.confirmed_date, service_bookings.status, service_types.name AS service_name, service_types.duration_minutes, service_types.booking_buffer_minutes, service_types.uses_main_church')
+        $this->db->select('service_bookings.id, service_bookings.service_type_id, service_bookings.schedule_rule_id,
+                service_bookings.confirmed_date, service_bookings.status,
+                service_types.name AS service_name, service_types.duration_minutes,
+                service_types.booking_buffer_before_minutes, service_types.booking_buffer_minutes,
+                service_types.uses_main_church, service_types.requires_priest')
             ->from('service_bookings')
             ->join('service_types', 'service_types.id = service_bookings.service_type_id')
             ->where('service_bookings.confirmed_date IS NOT NULL', null, false)
@@ -498,39 +620,150 @@ class Booking_model extends CI_Model
         $rows = $this->db->get()->result_array();
         $same_slot_count = 0;
         $capacity = $rule ? max(1, (int) $rule['capacity']) : 1;
+        $priest_event_keys = [];
+        $nearby_before = null;
+        $nearby_after = null;
 
         foreach ($rows as $existing) {
             $existing_start = strtotime($existing['confirmed_date']);
-            $existing_duration = max(15, (int) $existing['duration_minutes']);
-            $existing_buffer = max(0, (int) ($existing['booking_buffer_minutes'] ?? 0));
-            $existing_end = $existing_start + (($existing_duration + $existing_buffer) * 60);
-            $overlaps = ($start_ts < $existing_end && $end_ts > $existing_start);
-            if (!$overlaps) continue;
+            $existing_before = max(0, (int) ($existing['booking_buffer_before_minutes'] ?? 0));
+            $existing_duration = max(15, (int) ($existing['duration_minutes'] ?? 60));
+            $existing_after = max(0, (int) ($existing['booking_buffer_minutes'] ?? 0));
+            $existing_window_start = $existing_start - ($existing_before * 60);
+            $existing_window_end = $existing_start + (($existing_duration + $existing_after) * 60);
 
             $same_capacity_slot = $rule
                 && (int) $existing['service_type_id'] === (int) $service['id']
                 && (int) $existing['schedule_rule_id'] === (int) $rule['id']
                 && $existing_start === $start_ts;
 
+            $overlaps = ($window_start < $existing_window_end && $window_end > $existing_window_start);
+
             if ($same_capacity_slot) {
                 $same_slot_count++;
-                continue;
             }
 
-            if (!empty($service['uses_main_church']) && !empty($existing['uses_main_church'])) {
+            if ($overlaps
+                && !$same_capacity_slot
+                && !empty($service['uses_main_church'])
+                && !empty($existing['uses_main_church'])) {
                 return [
                     'available' => false,
                     'remaining' => 0,
-                    'message' => 'This time is no longer available because ' . $existing['service_name'] . ' is already scheduled in the church.',
+                    'message' => 'This schedule is unavailable because the protected church time overlaps with ' . $existing['service_name'] . '. Please choose another date or time.',
+                    'reserved_from' => date('g:i A', $window_start),
+                    'reserved_until' => date('g:i A', $window_end),
+                    'nearby_bookings' => [],
+                    'priest_total' => $this->active_priest_count(),
+                    'priests_available_for_slot' => 0,
+                    'priests_remaining_after_booking' => 0,
                 ];
+            }
+
+            if (!empty($service['requires_priest'])
+                && !empty($existing['requires_priest'])
+                && $overlaps
+                && !$same_capacity_slot) {
+                $event_key = !empty($existing['schedule_rule_id'])
+                    ? 'rule:' . $existing['schedule_rule_id'] . ':' . $existing['confirmed_date']
+                    : 'booking:' . $existing['id'];
+                $priest_event_keys[$event_key] = true;
+            }
+
+            if (!empty($service['uses_main_church'])
+                && !empty($existing['uses_main_church'])
+                && !$overlaps
+                && !$same_capacity_slot) {
+                if ($existing_window_end <= $window_start) {
+                    $gap = (int) floor(($window_start - $existing_window_end) / 60);
+                    if ($gap <= 180 && ($nearby_before === null || $gap < $nearby_before['gap_minutes'])) {
+                        $nearby_before = [
+                            'direction' => 'before',
+                            'service_name' => $existing['service_name'],
+                            'ceremony_time' => date('g:i A', $existing_start),
+                            'reserved_until' => date('g:i A', $existing_window_end),
+                            'gap_minutes' => $gap,
+                        ];
+                    }
+                } elseif ($existing_window_start >= $window_end) {
+                    $gap = (int) floor(($existing_window_start - $window_end) / 60);
+                    if ($gap <= 180 && ($nearby_after === null || $gap < $nearby_after['gap_minutes'])) {
+                        $nearby_after = [
+                            'direction' => 'after',
+                            'service_name' => $existing['service_name'],
+                            'ceremony_time' => date('g:i A', $existing_start),
+                            'reserved_from' => date('g:i A', $existing_window_start),
+                            'gap_minutes' => $gap,
+                        ];
+                    }
+                }
             }
         }
 
         if ($same_slot_count >= $capacity) {
-            return ['available' => false, 'remaining' => 0, 'message' => 'This regular schedule is already fully booked.'];
+            return [
+                'available' => false,
+                'remaining' => 0,
+                'message' => 'This regular schedule is already fully booked.',
+                'reserved_from' => date('g:i A', $window_start),
+                'reserved_until' => date('g:i A', $window_end),
+                'nearby_bookings' => [],
+                'priest_total' => $this->active_priest_count(),
+                'priests_available_for_slot' => 0,
+                'priests_remaining_after_booking' => 0,
+            ];
         }
 
-        return ['available' => true, 'remaining' => max(0, $capacity - $same_slot_count), 'message' => ''];
+        $priest_total = $this->active_priest_count();
+        $requires_priest = !empty($service['requires_priest']);
+        $busy_priest_events = count($priest_event_keys);
+        $priests_available_for_slot = $requires_priest ? max(0, $priest_total - $busy_priest_events) : $priest_total;
+
+        if ($requires_priest && $priest_total < 1) {
+            return [
+                'available' => false,
+                'remaining' => 0,
+                'message' => 'No active parish priest is currently configured for this service. Please contact the parish office.',
+                'reserved_from' => date('g:i A', $window_start),
+                'reserved_until' => date('g:i A', $window_end),
+                'nearby_bookings' => [],
+                'priest_total' => 0,
+                'priests_available_for_slot' => 0,
+                'priests_remaining_after_booking' => 0,
+            ];
+        }
+
+        if ($requires_priest && $priests_available_for_slot < 1) {
+            return [
+                'available' => false,
+                'remaining' => 0,
+                'message' => 'This time is unavailable because all parish priests are already committed to other services.',
+                'reserved_from' => date('g:i A', $window_start),
+                'reserved_until' => date('g:i A', $window_end),
+                'nearby_bookings' => [],
+                'priest_total' => $priest_total,
+                'priests_available_for_slot' => 0,
+                'priests_remaining_after_booking' => 0,
+            ];
+        }
+
+        $nearby = [];
+        if ($nearby_before !== null) $nearby[] = $nearby_before;
+        if ($nearby_after !== null) $nearby[] = $nearby_after;
+
+        return [
+            'available' => true,
+            'remaining' => max(0, $capacity - $same_slot_count),
+            'message' => '',
+            'reserved_from' => date('g:i A', $window_start),
+            'reserved_until' => date('g:i A', $window_end),
+            'nearby_bookings' => $nearby,
+            'priest_total' => $priest_total,
+            'priests_available_for_slot' => $priests_available_for_slot,
+            'priests_remaining_after_booking' => $requires_priest
+                ? max(0, $priests_available_for_slot - 1)
+                : $priests_available_for_slot,
+        ];
     }
 
     /**

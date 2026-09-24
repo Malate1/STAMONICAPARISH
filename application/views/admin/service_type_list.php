@@ -20,8 +20,8 @@
     <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Dates outside the regular schedule. The special fee and allowed hours are configured separately.</p>
   </div>
   <div class="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-    <div class="flex items-center gap-2 text-sm font-semibold text-blue-800"><i class="ph ph-clock"></i> Duration + Buffer</div>
-    <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Duration blocks the church while the service happens. Buffer reserves extra time afterward for preparation or clearing.</p>
+    <div class="flex items-center gap-2 text-sm font-semibold text-blue-800"><i class="ph ph-clock"></i> Protected Time Window</div>
+    <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">Preparation before + ceremony duration + clearance after are all protected from another Main Church booking.</p>
   </div>
   <div class="rounded-2xl border border-gray-200 bg-white p-4">
     <div class="flex items-center gap-2 text-sm font-semibold text-gray-800"><i class="ph ph-church"></i> Main Church</div>
@@ -57,7 +57,8 @@
 
     <div class="mt-3 flex flex-wrap gap-1.5">
       <?php if (!empty($s['uses_main_church'])): ?><span class="px-2 py-1 rounded-full bg-parish-50 text-parish-700 text-[10px] font-medium">Main Church</span><?php endif; ?>
-      <span class="px-2 py-1 rounded-full bg-gray-50 text-gray-500 text-[10px]"><?= (int)$s['duration_minutes'] ?> min</span>
+      <?php if (!empty($s['requires_priest'])): ?><span class="px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium">Priest required</span><?php endif; ?>
+      <span class="px-2 py-1 rounded-full bg-gray-50 text-gray-500 text-[10px]"><?= (int)($s['booking_buffer_before_minutes'] ?? 0) ?> + <?= (int)$s['duration_minutes'] ?> + <?= (int)$s['booking_buffer_minutes'] ?> min protected</span>
       <?php if (!empty($s['allow_special_booking'])): ?><span class="px-2 py-1 rounded-full bg-gold-50 text-gold-700 text-[10px]">Special booking enabled</span><?php endif; ?>
     </div>
 
@@ -92,7 +93,7 @@
 
           <div class="mb-5 rounded-xl bg-blue-50 border border-blue-100 p-4 text-xs text-blue-900 leading-relaxed">
             <div class="font-semibold mb-1"><i class="ph ph-info mr-1"></i> How these fields affect availability</div>
-            <p><strong>Duration</strong> blocks the service itself. <strong>Buffer</strong> adds protected time after it. <strong>Min/Max advance days</strong> control the earliest and latest dates shown to parishioners. Regular schedule fees and Special Booking fees override the Default/Base Fee when those booking types are used.</p>
+            <p><strong>Preparation Before</strong> reserves the church before the ceremony, <strong>Duration</strong> covers the ceremony itself, and <strong>Clearance After</strong> protects time for photos, guest exit, cleanup, or setup for the next service. The system also checks priest availability before offering a slot.</p>
           </div>
 
           <div class="grid md:grid-cols-2 gap-4">
@@ -111,16 +112,21 @@
             </div>
           </div>
 
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
             <div>
-              <label class="text-xs font-medium text-gray-500">Service Duration (minutes)</label>
-              <input type="number" min="15" step="15" name="duration_minutes" id="f-duration" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
-              <p class="text-[11px] text-gray-400 mt-1">How long this booking occupies the church calendar.</p>
+              <label class="text-xs font-medium text-gray-500">Preparation Before</label>
+              <input type="number" min="0" step="5" name="booking_buffer_before_minutes" id="f-buffer-before" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">Minutes reserved before the ceremony for arrival, setup, procession, or staging.</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-500">Buffer After Booking</label>
+              <label class="text-xs font-medium text-gray-500">Service Duration</label>
+              <input type="number" min="15" step="15" name="duration_minutes" id="f-duration" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
+              <p class="text-[11px] text-gray-400 mt-1">How long the ceremony or parish service itself normally lasts.</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500">Clearance After</label>
               <input type="number" min="0" step="5" name="booking_buffer_minutes" id="f-buffer" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
-              <p class="text-[11px] text-gray-400 mt-1">Extra protected minutes after the service for clearing, photos, or preparation.</p>
+              <p class="text-[11px] text-gray-400 mt-1">Protected time after the ceremony for pictorials, guest exit, cleanup, or reset.</p>
             </div>
             <div>
               <label class="text-xs font-medium text-gray-500">Minimum Advance Days</label>
@@ -134,10 +140,14 @@
             </div>
           </div>
 
-          <div class="grid sm:grid-cols-3 gap-3 mt-4">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
             <label class="flex items-start gap-2 rounded-xl border border-gray-100 p-3 text-sm text-gray-600">
               <input type="checkbox" name="uses_main_church" id="f-main-church" value="1" class="mt-0.5 rounded border-gray-300 text-parish-700">
               <span><strong class="block text-gray-800">Uses Main Church</strong><span class="text-xs">Prevents overlapping weddings, baptisms, funerals, etc.</span></span>
+            </label>
+            <label class="flex items-start gap-2 rounded-xl border border-gray-100 p-3 text-sm text-gray-600">
+              <input type="checkbox" name="requires_priest" id="f-requires-priest" value="1" class="mt-0.5 rounded border-gray-300 text-parish-700">
+              <span><strong class="block text-gray-800">Requires Priest</strong><span class="text-xs">Only offer a slot when at least one of the active parish priests is free.</span></span>
             </label>
             <label class="flex items-start gap-2 rounded-xl border border-gray-100 p-3 text-sm text-gray-600">
               <input type="checkbox" name="requires_approval_workflow" id="f-workflow" value="1" class="mt-0.5 rounded border-gray-300 text-parish-700">
@@ -164,7 +174,7 @@
 
           <div class="mb-4 rounded-xl bg-white/80 border border-gold-100 p-4 text-xs text-gray-600 leading-relaxed">
             <strong class="text-gold-800">Special Booking legend:</strong>
-            the fee is charged only for Special bookings; the start/end time defines the daily booking window; the interval controls how often selectable start times are generated.
+            the fee is charged only for Special bookings; the start/end time defines the full daily protected church window; preparation and clearance must fit inside it; the interval controls how often ceremony start times are generated.
           </div>
 
           <div id="special-settings" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -176,12 +186,12 @@
             <div>
               <label class="text-xs font-medium text-gray-500">Special Hours Start</label>
               <input type="time" name="special_start_time" id="f-special-start" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
-              <p class="text-[11px] text-gray-400 mt-1">Earliest time a Special booking may begin.</p>
+              <p class="text-[11px] text-gray-400 mt-1">Earliest time the church can be reserved, including preparation before the ceremony.</p>
             </div>
             <div>
               <label class="text-xs font-medium text-gray-500">Special Hours End</label>
               <input type="time" name="special_end_time" id="f-special-end" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm">
-              <p class="text-[11px] text-gray-400 mt-1">Latest boundary for the service, including its duration.</p>
+              <p class="text-[11px] text-gray-400 mt-1">Latest time the protected church window may end, including clearance after the ceremony.</p>
             </div>
             <div>
               <label class="text-xs font-medium text-gray-500">Start-Time Interval</label>
@@ -413,10 +423,12 @@ function editService(id){
     $('#f-desc').val(d.description);
     $('#f-fee').val(d.base_fee);
     $('#f-duration').val(d.duration_minutes || 60);
+    $('#f-buffer-before').val(d.booking_buffer_before_minutes || 0);
     $('#f-buffer').val(d.booking_buffer_minutes || 0);
     $('#f-min-days').val(d.min_advance_days || 0);
     $('#f-max-days').val(d.max_advance_days || 365);
     $('#f-main-church').prop('checked', parseInt(d.uses_main_church,10) === 1);
+    $('#f-requires-priest').prop('checked', parseInt(d.requires_priest == null ? 1 : d.requires_priest,10) === 1);
     $('#f-workflow').prop('checked', parseInt(d.requires_approval_workflow,10) === 1);
     $('#f-active').prop('checked', parseInt(d.is_active,10) === 1);
 

@@ -65,16 +65,30 @@ SET @sql = IF(
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(
+    EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'service_types' AND COLUMN_NAME = 'booking_buffer_before_minutes'),
+    'SELECT 1',
+    'ALTER TABLE service_types ADD COLUMN booking_buffer_before_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER slot_interval_minutes'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
     EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'service_types' AND COLUMN_NAME = 'booking_buffer_minutes'),
     'SELECT 1',
-    'ALTER TABLE service_types ADD COLUMN booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER slot_interval_minutes'
+    'ALTER TABLE service_types ADD COLUMN booking_buffer_minutes SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER booking_buffer_before_minutes'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'service_types' AND COLUMN_NAME = 'requires_priest'),
+    'SELECT 1',
+    'ALTER TABLE service_types ADD COLUMN requires_priest BOOLEAN NOT NULL DEFAULT 1 AFTER booking_buffer_minutes'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF(
     EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'service_types' AND COLUMN_NAME = 'min_advance_days'),
     'SELECT 1',
-    'ALTER TABLE service_types ADD COLUMN min_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER booking_buffer_minutes'
+    'ALTER TABLE service_types ADD COLUMN min_advance_days SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER requires_priest'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -131,13 +145,29 @@ UPDATE service_types
 SET allow_special_booking = 1,
     special_fee = 9000.00,
     uses_main_church = 1,
-    duration_minutes = CASE WHEN duration_minutes < 60 THEN 60 ELSE duration_minutes END
+    duration_minutes = CASE WHEN duration_minutes < 60 THEN 60 ELSE duration_minutes END,
+    booking_buffer_before_minutes = 60,
+    booking_buffer_minutes = 45,
+    requires_priest = 1
 WHERE service_key = 'wedding';
 
 UPDATE service_types
 SET allow_special_booking = 1,
-    uses_main_church = 1
+    uses_main_church = 1,
+    booking_buffer_before_minutes = 30,
+    booking_buffer_minutes = 30,
+    requires_priest = 1
 WHERE service_key = 'baptism';
+
+UPDATE service_types
+SET booking_buffer_before_minutes = 30,
+    booking_buffer_minutes = 30,
+    requires_priest = 1
+WHERE service_key = 'funeral';
+
+UPDATE service_types
+SET requires_priest = 1
+WHERE service_key IN ('confirmation','house_blessing','vehicle_blessing','counseling');
 
 -- Wedding: free every 2nd and 4th Thursday at 6:00 AM.
 INSERT INTO service_schedule_rules
@@ -181,5 +211,11 @@ SET @sql = IF(
     'ALTER TABLE service_bookings ADD INDEX idx_booking_schedule (confirmed_date, status)'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+INSERT INTO system_settings (setting_key, setting_value)
+SELECT 'priest_booking_capacity', '2'
+WHERE NOT EXISTS (
+    SELECT 1 FROM system_settings WHERE setting_key = 'priest_booking_capacity'
+);
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -13,10 +13,23 @@
             <span class="px-2.5 py-1 rounded-full <?= ($booking['booking_type'] ?? 'special') === 'regular' ? 'bg-emerald-50 text-emerald-700' : 'bg-gold-50 text-gold-700' ?> font-medium"><?= ucfirst($booking['booking_type'] ?? 'special') ?> Booking</span>
             <?php if ($booking['confirmed_date']): ?><span class="px-2.5 py-1 rounded-full bg-parish-50 text-parish-700 font-medium"><i class="ph ph-calendar-check mr-1"></i><?= format_datetime($booking['confirmed_date']) ?></span><?php endif; ?>
             <span class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 font-medium">Fee: <?= (float) $booking['fee_amount'] === 0.0 ? 'FREE' : peso($booking['fee_amount']) ?></span>
+            <?php if (!empty($booking['requires_priest'])): ?><span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-medium"><i class="ph ph-users mr-1"></i>Priest required</span><?php endif; ?>
           </div>
         </div>
         <span class="px-3 py-1.5 rounded-full text-xs font-medium <?= status_badge_class($booking['status']) ?>"><?= status_label($booking['status']) ?></span>
       </div>
+
+      <?php if ($booking['confirmed_date'] && !empty($booking['uses_main_church'])):
+        $ceremony_ts = strtotime($booking['confirmed_date']);
+        $protected_start = $ceremony_ts - ((int)($booking['booking_buffer_before_minutes'] ?? 0) * 60);
+        $protected_end = $ceremony_ts + (((int)($booking['duration_minutes'] ?? 60) + (int)($booking['booking_buffer_minutes'] ?? 0)) * 60);
+      ?>
+      <div class="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-xs text-blue-900">
+        <div class="font-semibold"><i class="ph ph-shield-check mr-1"></i>Main Church protected window</div>
+        <div class="mt-1"><?= date('g:i A', $protected_start) ?> – <?= date('g:i A', $protected_end) ?> · ceremony starts <?= date('g:i A', $ceremony_ts) ?></div>
+        <div class="text-blue-800/70 mt-1">Another Main Church service is blocked if its preparation, ceremony, or clearance time overlaps this window.</div>
+      </div>
+      <?php endif; ?>
 
       <?php if (!empty($booking['details'])): $details = json_decode($booking['details'], true); ?>
       <div class="mt-5 pt-5 border-t border-gray-100 grid sm:grid-cols-2 gap-3">
@@ -97,7 +110,7 @@
         <div>
           <label class="text-[11px] font-medium text-gray-500">Reserved Schedule</label>
           <input type="datetime-local" name="confirmed_date" value="<?= $booking['confirmed_date'] ? date('Y-m-d\TH:i', strtotime($booking['confirmed_date'])) : '' ?>" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm">
-          <p class="text-[11px] text-gray-400 mt-1">Changing this time is checked against church availability and the selected booking rule.</p>
+          <p class="text-[11px] text-gray-400 mt-1">Changing this time re-checks the full protected Main Church window (preparation + ceremony + clearance) and the selected priest’s availability.</p>
         </div>
         <button type="submit" class="w-full py-2.5 rounded-lg bg-parish-700 hover:bg-parish-800 text-white text-sm font-medium">Save Assignment</button>
       </form>
