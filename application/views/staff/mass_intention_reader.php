@@ -31,6 +31,11 @@ if (!$selected_mass && $mass_date && $schedule_id) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mass Intention Reader Sheet<?= $mass_date ? ' - ' . html_escape($mass_date) : '' ?></title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
   <style>
     :root{--green:#173b29;--green2:#235a38;--gold:#c8901d;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--paper:#fff;--bg:#f3f5f4}
     *{box-sizing:border-box}
@@ -38,6 +43,7 @@ if (!$selected_mass && $mass_date && $schedule_id) {
     .toolbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px}
     .toolbar-inner{max-width:980px;margin:0 auto;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
     .toolbar-left,.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    #reader-filter{min-width:360px;max-width:100%}
     select,button,a.btn{font:inherit;font-size:13px;border-radius:10px;border:1px solid #d1d5db;background:#fff;padding:9px 12px;color:var(--ink);text-decoration:none}
     button.primary{background:var(--green2);color:white;border-color:var(--green2);cursor:pointer;font-weight:700}
     .sheet{max-width:900px;margin:24px auto 48px;background:var(--paper);padding:44px 52px;border-radius:18px;box-shadow:0 10px 35px rgba(0,0,0,.08)}
@@ -59,6 +65,7 @@ if (!$selected_mass && $mass_date && $schedule_id) {
       .sheet{margin:0;border-radius:0;padding:28px 22px;box-shadow:none}
       .toolbar{position:relative}
       .toolbar-left,.toolbar-right{width:100%}
+      #reader-filter{width:100%;min-width:0}
       select{width:100%}
       h1{font-size:25px}
     }
@@ -178,5 +185,6 @@ function completeMass(){
 }
 <?php endif; ?>
 </script>
+<?php $this->load->view('partials/form_enhancements'); ?>
 </body>
 </html>
