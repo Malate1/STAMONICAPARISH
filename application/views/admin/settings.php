@@ -19,6 +19,18 @@
   </div>
 
   <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+    <div>
+      <h2 class="font-semibold text-gray-800">Social Media</h2>
+      <p class="text-xs text-gray-400 mt-1">Public social links shown in the website footer.</p>
+    </div>
+    <div>
+      <label class="text-xs font-medium text-gray-500">Facebook Page URL</label>
+      <input type="url" name="facebook_url" value="<?= html_escape($settings['facebook_url'] ?? '') ?>" placeholder="https://www.facebook.com/yourpage" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm">
+      <p class="text-[11px] text-gray-400 mt-1">Leave blank to hide the Facebook link from the public footer.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
     <h2 class="font-semibold text-gray-800">Booking Capacity</h2>
     <div>
       <label class="text-xs font-medium text-gray-500">Priests Available for Concurrent Bookings</label>

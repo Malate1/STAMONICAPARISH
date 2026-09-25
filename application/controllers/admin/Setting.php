@@ -19,10 +19,15 @@ class Setting extends Role_Controller
 
     public function store()
     {
-        $fields = ['parish_name', 'parish_address', 'parish_contact', 'gcash_account_name', 'gcash_account_number', 'priest_booking_capacity', 'mass_intention_cutoff_minutes'];
+        $fields = ['parish_name', 'parish_address', 'parish_contact', 'facebook_url', 'gcash_account_name', 'gcash_account_number', 'priest_booking_capacity', 'mass_intention_cutoff_minutes'];
         foreach ($fields as $f) {
             $value = $this->input->post($f, true);
-            if ($f === 'priest_booking_capacity') {
+            if ($f === 'facebook_url') {
+                $value = trim((string) $value);
+                if ($value !== '' && !filter_var($value, FILTER_VALIDATE_URL)) {
+                    return $this->json(['success' => false, 'message' => 'Please enter a valid Facebook page URL including https://']);
+                }
+            } elseif ($f === 'priest_booking_capacity') {
                 $value = (string) max(1, min(10, (int) $value));
             } elseif ($f === 'mass_intention_cutoff_minutes') {
                 $value = (string) max(0, min(1440, (int) $value));

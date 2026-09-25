@@ -52,6 +52,19 @@ class Base_Controller extends CI_Controller
     protected function render_public($view, $data = [])
     {
         $data['current_user'] = $this->current_user;
+
+        $public_settings = [];
+        $rows = $this->db->where_in('setting_key', [
+            'parish_name',
+            'parish_address',
+            'parish_contact',
+            'facebook_url',
+        ])->get('system_settings')->result_array();
+        foreach ($rows as $row) {
+            $public_settings[$row['setting_key']] = $row['setting_value'];
+        }
+
+        $data['public_settings'] = $public_settings;
         $data['body_view'] = $view;
         $data['body_data'] = $data;
         $this->load->view('layouts/public', $data);

@@ -68,7 +68,7 @@
 <?php $this->load->view($body_view, $body_data ?? []); ?>
 </main>
 
-<?php $this->load->view('partials/public_footer'); ?>
+<?php $this->load->view('partials/public_footer', ['current_user' => $current_user ?? null, 'public_settings' => $public_settings ?? []]); ?>
 <?php $this->load->view('partials/toast_init'); ?>
 
 </body>
