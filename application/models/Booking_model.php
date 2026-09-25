@@ -13,10 +13,28 @@ class Booking_model extends CI_Model
 
     public function create(array $data)
     {
+        // Optional metadata used by staff-created/walk-in bookings. These keys
+        // are deliberately removed before the booking row is inserted.
+        $history_changed_by = array_key_exists('_history_changed_by', $data)
+            ? $data['_history_changed_by']
+            : ($data['user_id'] ?? null);
+        $history_remarks = $data['_history_remarks'] ?? 'Application submitted';
+        unset($data['_history_changed_by'], $data['_history_remarks']);
+
         $data['created_at'] = date('Y-m-d H:i:s');
         $this->db->insert($this->table, $data);
         $id = $this->db->insert_id();
-        $this->add_status_history($id, null, $data['status'] ?? 'submitted', 'Application submitted', $data['user_id'] ?? null);
+
+        if ($id) {
+            $this->add_status_history(
+                $id,
+                null,
+                $data['status'] ?? 'submitted',
+                $history_remarks,
+                $history_changed_by
+            );
+        }
+
         return $id;
     }
 

@@ -152,6 +152,9 @@ $route['admin/(:any)']               = 'admin/$1';
 
 // ---- Secretary area ----
 $route['staff/community']                              = 'admin/community';
+$route['staff/walkin/lookup']                         = 'staff/walkin/lookup';
+$route['staff/walkin/availability']                   = 'staff/walkin/availability';
+$route['staff/walkin/store']                          = 'staff/walkin/store';
 $route['staff/service-config']                         = 'admin/service_type';
 $route['staff/service-config/get/(:num)']             = 'admin/service_type/get/$1';
 $route['staff/service-config/store']                   = 'admin/service_type/store';
