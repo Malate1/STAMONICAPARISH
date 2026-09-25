@@ -102,7 +102,11 @@ if (!function_exists('nav_item')) {
       <?php elseif ($role === ROLE_SECRETARY): ?>
         <?= nav_item(site_url('staff/community'), 'ph-tree-structure', 'Chapels & GSK', false) ?>
       <?php endif; ?>
-      <?= nav_item(site_url('logout'), 'ph-sign-out', 'Logout', false) ?>
+
+      <div class="pt-4 mt-4 border-t border-white/10">
+        <?= nav_item(site_url('/'), 'ph-globe', 'Visit Public Site', false) ?>
+        <?= nav_item(site_url('logout'), 'ph-sign-out', 'Logout', false) ?>
+      </div>
     </nav>
   </aside>
 </div>

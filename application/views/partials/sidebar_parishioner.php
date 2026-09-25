@@ -42,7 +42,13 @@
       <a href="<?= site_url('my/donations/new') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-heart text-lg"></i> Donations</a>
       <a href="<?= site_url('my/payments') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-credit-card text-lg"></i> Payments</a>
       <a href="<?= site_url('my/profile') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-user-circle text-lg"></i> My Profile</a>
-      <a href="<?= site_url('logout') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-sign-out text-lg"></i> Logout</a>
+
+      <div class="pt-4 mt-4 border-t border-white/10">
+        <a href="<?= site_url('/') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-100 bg-white/5 hover:bg-white/10 hover:text-white transition">
+          <i class="ph ph-globe text-lg text-gold-300"></i> Visit Public Site
+        </a>
+        <a href="<?= site_url('logout') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-parish-200 hover:bg-white/5"><i class="ph ph-sign-out text-lg"></i> Logout</a>
+      </div>
     </nav>
   </aside>
 </div>
