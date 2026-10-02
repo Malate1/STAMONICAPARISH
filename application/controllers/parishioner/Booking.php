@@ -73,12 +73,12 @@ class Booking extends Role_Controller
         }
 
         if ($booking_type === 'regular') {
-            $slots = $this->Booking_model->upcoming_regular_slots($service_id, 10, 2);
+            $slots = $this->Booking_model->upcoming_regular_slots($service_id, 4);
             return $this->json([
                 'success' => true,
                 'slots' => $slots,
                 'message' => empty($slots)
-                    ? 'No regular slots are currently available within the next 2 months. The parish may still be configuring the schedule, or the published slots are already full.'
+                    ? 'No regular slots are currently available. The parish may still be configuring the schedule, or the published slots are already full.'
                     : '',
             ]);
         }

@@ -519,7 +519,7 @@ class Booking_model extends CI_Model
     /**
      * Return upcoming recurring/regular slots that still have availability.
      */
-    public function upcoming_regular_slots($service_type_id, $limit = 8, $display_months = 2)
+    public function upcoming_regular_slots($service_type_id, $limit = 8)
     {
         $service = $this->db->get_where('service_types', ['id' => $service_type_id, 'is_active' => 1])->row_array();
         if (!$service) return [];
@@ -533,16 +533,9 @@ class Booking_model extends CI_Model
 
         $min_days = max(0, (int) ($service['min_advance_days'] ?? 1));
         $max_days = max($min_days, (int) ($service['max_advance_days'] ?? 365));
-        $today = new DateTimeImmutable(date('Y-m-d'));
-        $cursor = $today->modify('+' . $min_days . ' day');
-
-        // Keep the regular-slot chooser compact. The service can still allow
-        // bookings farther ahead through max_advance_days; this only limits
-        // how far ahead the "next available" cards are listed at once.
-        $display_months = max(1, (int) $display_months);
-        $service_end = $today->modify('+' . $max_days . ' day');
-        $display_end = $today->modify('+' . $display_months . ' months');
-        $end = $service_end < $display_end ? $service_end : $display_end;
+        $cursor = new DateTimeImmutable(date('Y-m-d'));
+        $cursor = $cursor->modify('+' . $min_days . ' day');
+        $end = (new DateTimeImmutable(date('Y-m-d')))->modify('+' . $max_days . ' day');
         $slots = [];
 
         while ($cursor <= $end && count($slots) < $limit) {
