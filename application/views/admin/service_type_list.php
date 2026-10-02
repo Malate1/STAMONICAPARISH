@@ -305,7 +305,7 @@
         <div>
           <label class="text-xs font-medium text-gray-500">Start Time</label>
           <input required type="time" name="start_time" id="r-time" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm">
-          <p class="text-[11px] text-gray-400 mt-1">The exact start time parishioners may select.</p>
+          <p class="text-[11px] text-gray-400 mt-1">The start time used for future empty dates. Dates that already have active bookings keep their original booked session time.</p>
         </div>
         <div>
           <label class="text-xs font-medium text-gray-500">Regular Schedule Fee (₱)</label>

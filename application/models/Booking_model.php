@@ -517,6 +517,38 @@ class Booking_model extends CI_Model
     }
 
     /**
+     * Resolve the effective start time for one recurring regular-session date.
+     *
+     * If a date already has active bookings tied to this schedule rule, keep
+     * that session's original booked time. This prevents a later edit to the
+     * recurring rule (for example 8:30 AM -> 9:00 AM) from retroactively
+     * moving an already-booked group session and causing it to conflict with
+     * itself. Dates with no existing bookings use the rule's current time.
+     */
+    private function effective_regular_start(array $rule, $date)
+    {
+        if (empty($rule['id']) || empty($date)) return null;
+
+        $existing = $this->db->select('confirmed_date')
+            ->where('schedule_rule_id', (int) $rule['id'])
+            ->where('booking_type', 'regular')
+            ->where('confirmed_date IS NOT NULL', null, false)
+            ->where('DATE(confirmed_date)', $date)
+            ->where_not_in('status', ['cancelled', 'returned'])
+            ->order_by('confirmed_date', 'asc')
+            ->limit(1)
+            ->get('service_bookings')->row_array();
+
+        if ($existing && !empty($existing['confirmed_date'])) {
+            $ts = strtotime($existing['confirmed_date']);
+            if ($ts) return date('Y-m-d H:i:s', $ts);
+        }
+
+        if (empty($rule['start_time'])) return null;
+        return $date . ' ' . $rule['start_time'];
+    }
+
+    /**
      * Return upcoming recurring/regular slots that still have availability.
      */
     public function upcoming_regular_slots($service_type_id, $limit = 8)
@@ -543,11 +575,13 @@ class Booking_model extends CI_Model
 
             foreach ($rules as $rule) {
                 // A recurring date can be configured before its official time is known.
-                // Do not publish it until staff sets a time.
+                // Do not publish it until staff sets a time. If this particular
+                // date already has bookings, preserve that session's original
+                // booked time even if the recurring rule was edited afterward.
                 if (empty($rule['start_time']) || !$this->rule_matches_date($rule, $date)) continue;
 
-                $start = $date . ' ' . $rule['start_time'];
-                if (strtotime($start) <= time()) continue;
+                $start = $this->effective_regular_start($rule, $date);
+                if (!$start || strtotime($start) <= time()) continue;
                 $availability = $this->check_slot_availability($service, $start, $rule, null);
                 if (!$availability['available']) continue;
 
@@ -774,8 +808,9 @@ class Booking_model extends CI_Model
                 return ['valid' => false, 'message' => 'That regular schedule is no longer available. Please choose another slot.'];
             }
 
-            if (date('H:i:s', $timestamp) !== $rule['start_time']) {
-                return ['valid' => false, 'message' => 'The selected time does not match the parish regular schedule.'];
+            $effective_start = $this->effective_regular_start($rule, $date);
+            if (!$effective_start || date('H:i:s', $timestamp) !== date('H:i:s', strtotime($effective_start))) {
+                return ['valid' => false, 'message' => 'The selected time does not match the parish regular session for this date. Please refresh the available slots.'];
             }
 
             $availability = $this->check_slot_availability($service, $normalized, $rule, $exclude_booking_id);
