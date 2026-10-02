@@ -537,7 +537,13 @@ function renderSlotButton(slot, type){
   var remaining = parseInt(slot.remaining || 1, 10);
   var nearby = Array.isArray(slot.nearby_bookings) ? slot.nearby_bookings : [];
   var capacityText = parseInt(slot.capacity || 1,10) > 1
-    ? '<div class="text-[10px] text-gray-500 mt-1 flex items-center gap-1"><i class="ph ph-users-three text-parish-600"></i> ' + remaining + ' <?= $service['service_key'] === 'baptism' ? 'baby slot' : 'place' ?>' + (remaining === 1 ? '' : 's') + ' left in this session</div>'
+    ? '<div class="mt-3 flex items-center gap-2 rounded-xl bg-parish-50 border border-parish-100 px-3 py-2.5">' +
+        '<i class="ph ph-users-three text-parish-600 text-lg shrink-0"></i>' +
+        '<div class="flex items-baseline gap-2 min-w-0">' +
+          '<span class="text-2xl sm:text-3xl font-extrabold leading-none text-parish-800">' + remaining + '</span>' +
+          '<span class="text-sm sm:text-base font-semibold text-gray-700"><?= $service['service_key'] === 'baptism' ? 'baby slot' : 'place' ?>' + (remaining === 1 ? '' : 's') + ' left in this session</span>' +
+        '</div>' +
+      '</div>'
     : '';
   var protectedText = slot.reserved_from && slot.reserved_until
     ? '<div class="text-[10px] text-gray-500 mt-2 flex items-center gap-1"><i class="ph ph-shield-check text-parish-600"></i> Church protected ' + escapeHtml(slot.reserved_from) + '–' + escapeHtml(slot.reserved_until) + '</div>'
@@ -549,7 +555,7 @@ function renderSlotButton(slot, type){
     ? '<div class="mt-2 rounded-lg bg-amber-50 border border-amber-100 px-2.5 py-2 text-[10px] font-medium text-amber-800"><i class="ph ph-info mr-1"></i> Another church service is scheduled nearby</div>'
     : '';
 
-  return '<button type="button" class="available-slot text-left rounded-2xl border border-gray-200 bg-white p-5 hover:border-parish-300 hover:shadow-sm transition" ' +
+  return '<button type="button" class="available-slot text-left rounded-2xl border border-gray-200 bg-white p-4 hover:border-parish-300 hover:shadow-sm transition" ' +
     'data-type="' + escapeHtml(type) + '" ' +
     'data-datetime="' + escapeHtml(slot.datetime) + '" ' +
     'data-rule="' + escapeHtml(slot.schedule_rule_id || '') + '" ' +
@@ -563,8 +569,8 @@ function renderSlotButton(slot, type){
     'data-nearby="' + escapeHtml(encodeURIComponent(JSON.stringify(nearby))) + '">' +
       '<div class="flex items-start justify-between gap-2">' +
         '<div>' +
-          '<div class="text-lg sm:text-xl font-bold leading-snug text-gray-900">' + escapeHtml(slot.date_label) + '</div>' +
-          '<div class="text-3xl sm:text-4xl font-extrabold leading-none tracking-tight text-parish-800 mt-2">' + escapeHtml(slot.time) + '</div>' +
+          '<div class="text-sm font-semibold text-gray-800">' + escapeHtml(slot.date_label) + '</div>' +
+          '<div class="text-xl font-bold text-parish-800 mt-1">' + escapeHtml(slot.time) + '</div>' +
         '</div>' +
         '<span class="text-[10px] font-bold px-2 py-1 rounded-full ' + (Number(slot.fee || 0) === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gold-100 text-gold-700') + '">' + feeText + '</span>' +
       '</div>' +
