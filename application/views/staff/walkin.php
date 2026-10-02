@@ -646,21 +646,22 @@ function renderSlotButton(slot, type){
   var capacity = parseInt(slot.capacity || 1,10);
   var nearby = Array.isArray(slot.nearby_bookings) ? slot.nearby_bookings : [];
 
+  var slotCountBadge = capacity > 1
+    ? '<div class="shrink-0 rounded-xl bg-parish-50 border border-parish-100 px-3 py-2 text-center min-w-[78px]">' +
+        '<div class="text-2xl sm:text-3xl font-extrabold leading-none text-parish-800">' + remaining + '</div>' +
+        '<div class="text-[10px] sm:text-xs font-semibold leading-tight text-parish-700 mt-1">place' + (remaining === 1 ? '' : 's') + ' left</div>' +
+      '</div>'
+    : '';
+  var feeMeta = fee > 0
+    ? '<div class="text-[11px] font-semibold text-gold-700 mt-2"><i class="ph ph-coins mr-1"></i> Booking fee: ' + peso(fee) + '</div>'
+    : '';
+
   var meta = '';
   if(slot.reserved_from && slot.reserved_until){
     meta += '<div class="text-[10px] text-gray-500 mt-2 flex items-center gap-1"><i class="ph ph-shield-check text-parish-600"></i>Protected ' + escapeHtml(slot.reserved_from) + '–' + escapeHtml(slot.reserved_until) + '</div>';
   }
   if(parseInt(slot.priest_total || 0,10) > 0){
     meta += '<div class="text-[10px] text-gray-500 mt-1 flex items-center gap-1"><i class="ph ph-users text-parish-600"></i>Priest checked · ' + escapeHtml(slot.priests_available_for_slot || 0) + ' of ' + escapeHtml(slot.priest_total || 0) + ' available</div>';
-  }
-  if(capacity > 1){
-    meta += '<div class="mt-3 flex items-center gap-2 rounded-xl bg-parish-50 border border-parish-100 px-3 py-2.5">' +
-      '<i class="ph ph-users-three text-parish-600 text-lg shrink-0"></i>' +
-      '<div class="flex items-baseline gap-2 min-w-0">' +
-        '<span class="text-2xl sm:text-3xl font-extrabold leading-none text-parish-800">' + remaining + '</span>' +
-        '<span class="text-sm sm:text-base font-semibold text-gray-700">place' + (remaining === 1 ? '' : 's') + ' left in this session</span>' +
-      '</div>' +
-    '</div>';
   }
   if(nearby.length){
     meta += '<div class="mt-2 rounded-lg bg-amber-50 border border-amber-100 px-2.5 py-2 text-[10px] font-medium text-amber-800"><i class="ph ph-info mr-1"></i>Another church service is scheduled nearby</div>';
@@ -676,12 +677,12 @@ function renderSlotButton(slot, type){
     'data-reserved-from="' + escapeHtml(slot.reserved_from || '') + '" ' +
     'data-reserved-until="' + escapeHtml(slot.reserved_until || '') + '" ' +
     'data-nearby="' + escapeHtml(encodeURIComponent(JSON.stringify(nearby))) + '">' +
-      '<div class="flex items-start justify-between gap-2">' +
-        '<div><div class="text-sm font-semibold text-gray-800">' + escapeHtml(slot.date_label || '') + '</div><div class="text-xl font-bold text-parish-800 mt-1">' + escapeHtml(slot.time || '') + '</div></div>' +
-        '<span class="text-[10px] font-bold px-2 py-1 rounded-full ' + (fee === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gold-100 text-gold-700') + '">' + (fee === 0 ? 'FREE' : peso(fee)) + '</span>' +
+      '<div class="flex items-start justify-between gap-3">' +
+        '<div class="min-w-0"><div class="text-sm font-semibold text-gray-800">' + escapeHtml(slot.date_label || '') + '</div><div class="text-xl font-bold text-parish-800 mt-1">' + escapeHtml(slot.time || '') + '</div></div>' +
+        slotCountBadge +
       '</div>' +
       '<div class="text-[11px] text-gray-400 mt-2">' + escapeHtml(slot.rule_name || (type === 'regular' ? 'Regular Schedule' : 'Special Booking')) + '</div>' +
-      meta +
+      feeMeta + meta +
     '</button>';
 }
 
