@@ -50,7 +50,7 @@
         <?php foreach ($documents as $d): ?>
         <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100">
           <i class="ph ph-file text-gray-400"></i>
-          <a href="<?= base_url($d['file_path']) ?>" target="_blank" class="flex-1 text-sm text-gray-700 hover:underline"><?= html_escape($d['label'] ?: $d['original_name']) ?></a>
+          <a href="<?= site_url('secure-file/document/' . (int)$d['id']) ?>" target="_blank" rel="noopener" class="flex-1 text-sm text-gray-700 hover:underline"><?= html_escape($d['label'] ?: $d['original_name']) ?></a>
           <?php if ($d['verified']): ?>
             <span class="text-xs text-emerald-600 font-medium">Verified</span>
           <?php else: ?>
@@ -81,20 +81,45 @@
 
   <div class="space-y-6">
     <div class="bg-white rounded-2xl border border-gray-100 p-6">
-      <h2 class="text-sm font-semibold text-gray-700 mb-4">Update Status</h2>
+      <h2 class="text-sm font-semibold text-gray-700 mb-2">Next Workflow Action</h2>
+      <p class="text-xs text-gray-400 mb-4">Only valid next steps are shown for the current booking state.</p>
       <div class="grid grid-cols-1 gap-2">
-        <button onclick="changeStatus('under_review')" class="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100">Mark Under Review</button>
-        <button onclick="promptMissingReq()" class="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100">Request Missing Requirements</button>
-        <button onclick="changeStatus('requirements_complete')" class="px-3 py-2 rounded-lg bg-teal-50 text-teal-700 text-sm font-medium hover:bg-teal-100">Requirements Complete</button>
-        <?php if ($booking['service_key'] === 'wedding'): ?>
-        <button onclick="changeStatus('interview_processing')" class="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100">Interview / Canonical Processing</button>
-        <button onclick="changeStatus('priest_review')" class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100">Send for Priest Review</button>
+        <?php if (in_array('under_review', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('under_review')" class="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100">Mark Under Review</button>
         <?php endif; ?>
-        <?php if ((float) $booking['fee_amount'] > 0): ?>
-        <button onclick="changeStatus('awaiting_payment')" class="px-3 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium hover:bg-orange-100">Move to Awaiting Payment</button>
+        <?php if (in_array('missing_requirements', $allowed_statuses ?? [], true)): ?>
+          <button onclick="promptMissingReq()" class="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100">Request Missing Requirements</button>
         <?php endif; ?>
-        <button onclick="changeStatus('completed')" class="px-3 py-2 rounded-lg bg-green-50 text-green-700 text-sm font-medium hover:bg-green-100">Mark Completed</button>
-        <button onclick="changeStatus('cancelled')" class="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200">Cancel Application</button>
+        <?php if (in_array('requirements_complete', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('requirements_complete')" class="px-3 py-2 rounded-lg bg-teal-50 text-teal-700 text-sm font-medium hover:bg-teal-100">Requirements Complete</button>
+        <?php endif; ?>
+        <?php if (in_array('interview_processing', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('interview_processing')" class="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100">Interview / Canonical Processing</button>
+        <?php endif; ?>
+        <?php if (in_array('priest_review', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('priest_review')" class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100">Send for Priest Review</button>
+        <?php endif; ?>
+        <?php if (in_array('awaiting_payment', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('awaiting_payment')" class="px-3 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium hover:bg-orange-100">Move to Awaiting Payment</button>
+        <?php endif; ?>
+        <?php if (in_array('approved', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('approved')" class="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-medium hover:bg-emerald-100">Approve Booking</button>
+        <?php endif; ?>
+        <?php if (in_array('scheduled', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('scheduled')" class="px-3 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100">Mark Scheduled</button>
+        <?php endif; ?>
+        <?php if (in_array('completed', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('completed')" class="px-3 py-2 rounded-lg bg-green-50 text-green-700 text-sm font-medium hover:bg-green-100">Mark Completed</button>
+        <?php endif; ?>
+        <?php if (in_array('returned', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('returned')" class="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 text-sm font-medium hover:bg-slate-100">Return for Review</button>
+        <?php endif; ?>
+        <?php if (in_array('cancelled', $allowed_statuses ?? [], true)): ?>
+          <button onclick="changeStatus('cancelled')" class="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200">Cancel Application</button>
+        <?php endif; ?>
+        <?php if (empty($allowed_statuses)): ?>
+          <div class="rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-gray-500">No further manual workflow action is available from this status.</div>
+        <?php endif; ?>
       </div>
     </div>
 

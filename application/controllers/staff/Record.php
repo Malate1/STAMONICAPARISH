@@ -11,7 +11,12 @@ class Record extends Role_Controller
 
     public function index()
     {
-        $this->render_app('admin/record_list', [], 'layouts/app_admin');
+        $data['record_workflow_ready'] = $this->db->field_exists('record_status', 'sacramental_records')
+            && $this->db->field_exists('source_type', 'sacramental_records')
+            && $this->db->field_exists('updated_by', 'sacramental_records')
+            && $this->db->field_exists('verified_by', 'sacramental_records')
+            && $this->db->field_exists('verified_at', 'sacramental_records');
+        $this->render_app('admin/record_list', $data, 'layouts/app_admin');
     }
 
     public function datatable()
@@ -30,17 +35,29 @@ class Record extends Role_Controller
         }
         $rows = $this->db->get('sacramental_records')->result_array();
 
+        $workflow_ready = $this->db->field_exists('record_status', 'sacramental_records');
         $data = [];
         foreach ($rows as $r) {
+            $type_html = html_escape(ucfirst($r['record_type']));
+            if ($workflow_ready) {
+                $is_verified = ($r['record_status'] ?? 'verified') === 'verified';
+                $type_html .= '<div class="mt-1"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold '
+                    . ($is_verified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')
+                    . '">' . ($is_verified ? 'Verified' : 'Draft · Needs Review') . '</span></div>';
+            }
+
+            $actions = dt_icon_button('ph-pencil-simple', 'Edit sacramental record', 'editRecord(' . (int) $r['id'] . ')');
+            if ($workflow_ready && ($r['record_status'] ?? 'verified') === 'draft') {
+                $actions .= dt_icon_button('ph-seal-check', 'Verify registry record', 'verifyRecord(' . (int) $r['id'] . ')', 'blue');
+            }
+
             $data[] = [
-                'type'      => html_escape(ucfirst($r['record_type'])),
+                'type'      => $type_html,
                 'full_name' => html_escape($r['full_name']),
                 'sacrament_date' => !empty($r['sacrament_date']) ? format_date($r['sacrament_date']) : '—',
                 'parents'   => html_escape(trim(($r['father_name'] ?: '') . ' / ' . ($r['mother_name'] ?: ''), ' /') ?: '—'),
                 'registry'  => 'Bk. ' . html_escape($r['registry_book'] ?: '—') . ' Pg. ' . html_escape($r['registry_page'] ?: '—'),
-                'actions'   => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">'
-                    . dt_icon_button('ph-pencil-simple', 'Edit sacramental record', 'editRecord(' . (int) $r['id'] . ')')
-                    . '</div>',
+                'actions'   => '<div class="flex items-center justify-center gap-1.5 whitespace-nowrap">' . $actions . '</div>',
             ];
         }
 
@@ -103,19 +120,73 @@ class Record extends Role_Controller
             'registry_page'     => $this->input->post('registry_page', true),
             'registry_entry_no' => $this->input->post('registry_entry_no', true),
             'remarks'           => $this->input->post('remarks', true),
-            'created_by'        => $this->current_user['id'],
         ];
+
+        $workflow_ready = $this->db->field_exists('record_status', 'sacramental_records')
+            && $this->db->field_exists('source_type', 'sacramental_records')
+            && $this->db->field_exists('updated_by', 'sacramental_records')
+            && $this->db->field_exists('verified_by', 'sacramental_records')
+            && $this->db->field_exists('verified_at', 'sacramental_records');
+
+        if ($workflow_ready) {
+            $payload['record_status'] = 'draft';
+            $payload['updated_by'] = $this->current_user['id'];
+            $payload['verified_by'] = null;
+            $payload['verified_at'] = null;
+        }
 
         $id = $this->input->post('id');
         if ($id) {
             $this->db->where('id', $id)->update('sacramental_records', $payload);
             $msg = 'Record updated.';
         } else {
+            $payload['created_by'] = $this->current_user['id'];
+            if ($workflow_ready) $payload['source_type'] = 'manual';
             $this->db->insert('sacramental_records', $payload);
-            $msg = 'Record added to registry.';
+            $msg = $workflow_ready
+                ? 'Record saved as Draft. Another authorized staff member should verify it against the parish register.'
+                : 'Record added to registry.';
+        }
+
+        if ($id && $workflow_ready) {
+            $msg = 'Record updated and returned to Draft for verification.';
         }
 
         $this->log_activity('Saved sacramental record', 'records', $payload['full_name']);
         $this->json(['success' => true, 'message' => $msg]);
+    }
+
+    public function verify($id)
+    {
+        if (!$this->db->field_exists('record_status', 'sacramental_records')) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Run database/migrations/20260925_sacramental_record_workflow.sql first.'
+            ]);
+        }
+
+        $record = $this->db->get_where('sacramental_records', ['id' => (int) $id])->row_array();
+        if (!$record) return $this->json(['success' => false, 'message' => 'Record not found.'], 404);
+
+        if (($record['record_status'] ?? 'verified') === 'verified') {
+            return $this->json(['success' => true, 'message' => 'This registry record is already verified.']);
+        }
+
+        $last_encoder = (int) ($record['updated_by'] ?: $record['created_by']);
+        if ($last_encoder === (int) $this->current_user['id']) {
+            return $this->json([
+                'success' => false,
+                'message' => 'For registry integrity, the staff member who last encoded or edited this record cannot verify the same record. Ask another authorized staff member to compare it with the source register.'
+            ]);
+        }
+
+        $this->db->where('id', (int) $id)->update('sacramental_records', [
+            'record_status' => 'verified',
+            'verified_by' => $this->current_user['id'],
+            'verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->log_activity('Verified sacramental record', 'records', $record['full_name']);
+        $this->json(['success' => true, 'message' => 'Registry record verified against the parish source record.']);
     }
 }

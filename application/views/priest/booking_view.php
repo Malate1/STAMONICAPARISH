@@ -27,7 +27,7 @@
     <h2 class="text-sm font-semibold text-gray-700 mb-3">Documents</h2>
     <div class="space-y-2">
       <?php foreach ($documents as $d): ?>
-      <a href="<?= base_url($d['file_path']) ?>" target="_blank" class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 text-sm hover:border-parish-300">
+      <a href="<?= site_url('secure-file/document/' . (int)$d['id']) ?>" target="_blank" rel="noopener" class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 text-sm hover:border-parish-300">
         <i class="ph ph-file text-gray-400"></i> <?= html_escape($d['label'] ?: $d['original_name']) ?>
       </a>
       <?php endforeach; ?>

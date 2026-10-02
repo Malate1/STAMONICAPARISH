@@ -7,14 +7,19 @@ class Payment_model extends CI_Model
 
     public function generate_code()
     {
-        $count = $this->db->count_all_results($this->table) + 1;
-        return generate_code('pay', $count);
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $code = 'SMC-PAY-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
+            if (!$this->db->where('payment_code', $code)->count_all_results($this->table)) {
+                return $code;
+            }
+        }
+
+        throw new RuntimeException('Unable to generate a unique payment code.');
     }
 
-    public function generate_receipt_no()
+    public function generate_receipt_no($payment_id)
     {
-        $count = $this->db->where('status', 'payment_verified')->count_all_results($this->table) + 1;
-        return sprintf('OR-%s-%05d', date('Y'), $count);
+        return sprintf('OR-%s-%07d', date('Y'), (int) $payment_id);
     }
 
     public function create(array $data)

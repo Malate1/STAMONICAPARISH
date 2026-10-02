@@ -383,37 +383,29 @@ class Event extends Role_Controller
             return ['success' => true, 'path' => null];
         }
 
-        if ($_FILES['cover_image']['error'] !== UPLOAD_ERR_OK) {
-            return ['success' => false, 'message' => 'The event photo upload did not complete successfully.'];
-        }
+        $this->load->library('secure_upload');
+        $target_dir = FCPATH . 'uploads/events/';
+        $stored = $this->secure_upload->store(
+            $_FILES['cover_image'],
+            $target_dir,
+            'event',
+            5 * 1024 * 1024,
+            [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+            ]
+        );
 
-        if ((int) $_FILES['cover_image']['size'] > 5 * 1024 * 1024) {
-            return ['success' => false, 'message' => 'Event photo must be 5 MB or smaller.'];
-        }
+        if (!$stored['success']) return $stored;
 
-        $ext = strtolower(pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
-            return ['success' => false, 'message' => 'Use a JPG, PNG, or WebP image for the event photo.'];
-        }
-
-        $image_info = @getimagesize($_FILES['cover_image']['tmp_name']);
-        if (!$image_info) {
+        $destination = $target_dir . $stored['filename'];
+        if (!@getimagesize($destination)) {
+            @unlink($destination);
             return ['success' => false, 'message' => 'The uploaded file is not a valid image.'];
         }
 
-        $target_dir = FCPATH . 'uploads/events/';
-        if (!is_dir($target_dir) && !@mkdir($target_dir, 0755, true)) {
-            return ['success' => false, 'message' => 'The server could not create the event image directory.'];
-        }
-
-        $filename = 'event_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . ($ext === 'jpeg' ? 'jpg' : $ext);
-        $destination = $target_dir . $filename;
-
-        if (!move_uploaded_file($_FILES['cover_image']['tmp_name'], $destination)) {
-            return ['success' => false, 'message' => 'The event photo could not be saved on the server.'];
-        }
-
-        return ['success' => true, 'path' => 'uploads/events/' . $filename];
+        return ['success' => true, 'path' => 'uploads/events/' . $stored['filename']];
     }
 
     private function delete_local_cover($path)

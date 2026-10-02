@@ -1,0 +1,3 @@
+-- Password-reset queue / Resend workflow intentionally reverted.
+-- Do not run this migration. The project continues to use the existing
+-- Administrator -> Accounts -> Reset Password workflow.

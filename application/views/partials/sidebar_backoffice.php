@@ -30,6 +30,7 @@ if (!function_exists('nav_item')) {
       <?= nav_item(site_url($base . '/certificate'), 'ph-scroll', 'Certificates', $seg2 === 'certificate') ?>
       <?= nav_item(site_url($base . '/payment'), 'ph-credit-card', 'Payments', $seg2 === 'payment') ?>
       <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', $seg2 === 'record') ?>
+      <?= nav_item(site_url($base . '/archive'), 'ph-books', 'Legacy Archive', $seg2 === 'archive') ?>
       <?php if ($role === ROLE_SECRETARY): ?>
         <?= nav_item(site_url('staff/service-config'), 'ph-calendar-dots', 'Service Availability', $seg2 === 'service-config') ?>
         <?= nav_item(site_url('staff/community'), 'ph-tree-structure', 'Chapels & GSK', $seg2 === 'community') ?>
@@ -59,6 +60,8 @@ if (!function_exists('nav_item')) {
 
       <div class="pt-3 pb-1 px-3 text-[11px] uppercase tracking-wide text-parish-400">Administration</div>
       <?= nav_item(site_url('admin/users'), 'ph-identification-badge', 'Accounts', $seg2 === 'users') ?>
+      <?= nav_item(site_url('admin/audit'), 'ph-shield-check', 'Audit Trail', $seg2 === 'audit') ?>
+      <?= nav_item(site_url('admin/system-health'), 'ph-heartbeat', 'System Health', $seg2 === 'system-health') ?>
       <?= nav_item(site_url('admin/service_type'), 'ph-sliders', 'Service Config', $seg2 === 'service_type') ?>
       <?= nav_item(site_url('admin/setting'), 'ph-gear', 'Settings', $seg2 === 'setting') ?>
     <?php endif; ?>
@@ -84,6 +87,7 @@ if (!function_exists('nav_item')) {
         <?= nav_item(site_url($base . '/certificate'), 'ph-scroll', 'Certificates', false) ?>
         <?= nav_item(site_url($base . '/payment'), 'ph-credit-card', 'Payments', false) ?>
         <?= nav_item(site_url($base . '/record'), 'ph-archive', 'Sacramental Records', false) ?>
+        <?= nav_item(site_url($base . '/archive'), 'ph-books', 'Legacy Archive', false) ?>
         <?php if ($role === ROLE_SECRETARY): ?>
           <?= nav_item(site_url('staff/service-config'), 'ph-calendar-dots', 'Service Availability', false) ?>
         <?php endif; ?>
@@ -97,6 +101,8 @@ if (!function_exists('nav_item')) {
         <?= nav_item(site_url('priest/mass-intentions'), 'ph-hands-praying', 'Mass Intention Reader', false) ?>
       <?php endif; ?>
       <?php if ($role === ROLE_ADMIN): ?>
+        <?= nav_item(site_url('admin/audit'), 'ph-shield-check', 'Audit Trail', false) ?>
+        <?= nav_item(site_url('admin/system-health'), 'ph-heartbeat', 'System Health', false) ?>
         <?= nav_item(site_url('admin/community'), 'ph-tree-structure', 'Chapels & GSK', false) ?>
         <?= nav_item(site_url('admin/project'), 'ph-folder-open', 'Projects & Giving', false) ?>
       <?php elseif ($role === ROLE_SECRETARY): ?>

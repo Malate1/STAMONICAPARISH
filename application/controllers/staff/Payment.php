@@ -7,7 +7,7 @@ class Payment extends Role_Controller
     {
         parent::__construct();
         $this->guard([ROLE_SECRETARY]);
-        $this->load->model(['Payment_model', 'Booking_model', 'Certificate_model', 'Notification_model']);
+        $this->load->model(['Payment_model', 'Booking_model', 'Certificate_model', 'Donation_model', 'Notification_model']);
     }
 
     public function index()
@@ -23,10 +23,16 @@ class Payment extends Role_Controller
 
         $data = [];
         foreach ($rows as $r) {
+            $payment_for = ucwords(str_replace('_', ' ', $r['payable_type'])) . ' #' . $r['payable_id'];
+            if ($r['payable_type'] === 'donation') {
+                $donation = $this->Donation_model->get($r['payable_id']);
+                $payment_for = 'Donation — ' . ($donation['campaign_title'] ?? 'General Parish Fund');
+            }
+
             $data[] = [
                 'payment_code' => $r['payment_code'],
                 'payer'        => $r['first_name'] . ' ' . $r['last_name'],
-                'for'          => ucwords(str_replace('_', ' ', $r['payable_type'])) . ' #' . $r['payable_id'],
+                'for'          => $payment_for,
                 'amount'       => peso($r['amount']),
                 'reference'    => $r['gcash_reference_no'] ?: '—',
                 'status'       => '<span class="px-2.5 py-1 rounded-full text-xs font-medium ' . status_badge_class($r['status']) . '">' . status_label($r['status']) . '</span>',
@@ -52,42 +58,51 @@ class Payment extends Role_Controller
     public function verify()
     {
         $id = (int) $this->input->post('id');
-        $payment = $this->Payment_model->get($id);
-        if (!$payment) return $this->json(['success' => false, 'message' => 'Not found.']);
 
-        $receipt_no = $this->Payment_model->generate_receipt_no();
-        $this->Payment_model->update($id, ['status' => 'payment_verified', 'verified_by' => $this->current_user['id'], 'verified_at' => date('Y-m-d H:i:s'), 'receipt_no' => $receipt_no]);
+        $this->load->library('payment_workflow');
+        $result = $this->payment_workflow->verify($id, $this->current_user['id']);
 
-        if ($payment['payable_type'] === 'service_booking') {
-            $this->Booking_model->change_status($payment['payable_id'], 'approved', $this->current_user['id'], 'Payment verified — ' . $receipt_no);
-            $booking = $this->Booking_model->get($payment['payable_id']);
-            $this->Notification_model->push($booking['user_id'], 'Payment Verified', 'Your payment for ' . $booking['booking_code'] . ' has been verified. OR: ' . $receipt_no, site_url('my/bookings/' . $payment['payable_id']));
-        } elseif ($payment['payable_type'] === 'certificate_request') {
-            $this->Certificate_model->update($payment['payable_id'], ['status' => 'preparing']);
-            $cert = $this->Certificate_model->get($payment['payable_id']);
-            $this->Notification_model->push($cert['user_id'], 'Payment Verified', 'Your certificate payment has been verified. OR: ' . $receipt_no, site_url('my/certificates/' . $payment['payable_id']));
+        if (!$result['success']) {
+            return $this->json(['success'=>false,'message'=>$result['message']]);
         }
 
-        $this->log_activity('Verified GCash payment', 'payment', $payment['payment_code'] . ' — ' . $receipt_no);
-        $this->json(['success' => true, 'message' => 'Payment verified. Receipt: ' . $receipt_no]);
+        $payment = $result['payment'] ?? $this->Payment_model->get($id);
+        if (empty($result['already_verified']) && $payment) {
+            $this->log_activity(
+                'Verified GCash payment',
+                'payment',
+                $payment['payment_code'] . ' — ' . ($result['receipt_no'] ?? '')
+            );
+        }
+
+        $this->json([
+            'success'=>true,
+            'message'=>$result['message'],
+            'receipt_no'=>$result['receipt_no'] ?? null,
+        ]);
     }
 
     public function reject()
     {
         $id = (int) $this->input->post('id');
-        $reason = $this->input->post('reason', true);
-        $payment = $this->Payment_model->get($id);
-        if (!$payment) return $this->json(['success' => false, 'message' => 'Not found.']);
+        $reason = trim((string)$this->input->post('reason', true));
 
-        $this->Payment_model->update($id, ['status' => 'rejected', 'verified_by' => $this->current_user['id'], 'verified_at' => date('Y-m-d H:i:s'), 'remarks' => $reason]);
+        $this->load->library('payment_workflow');
+        $result = $this->payment_workflow->reject(
+            $id,
+            $this->current_user['id'],
+            $reason
+        );
 
-        if ($payment['payable_type'] === 'service_booking') {
-            $this->Booking_model->change_status($payment['payable_id'], 'awaiting_payment', $this->current_user['id'], 'Payment rejected: ' . $reason);
-        } else {
-            $this->Certificate_model->update($payment['payable_id'], ['status' => 'awaiting_payment']);
+        if (!$result['success']) {
+            return $this->json(['success'=>false,'message'=>$result['message']]);
         }
 
-        $this->log_activity('Rejected GCash payment', 'payment', $payment['payment_code']);
-        $this->json(['success' => true, 'message' => 'Payment rejected.']);
+        $payment = $result['payment'] ?? $this->Payment_model->get($id);
+        if ($payment) {
+            $this->log_activity('Rejected GCash payment', 'payment', $payment['payment_code']);
+        }
+
+        $this->json(['success'=>true,'message'=>$result['message']]);
     }
 }

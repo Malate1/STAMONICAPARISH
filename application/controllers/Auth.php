@@ -40,6 +40,7 @@ class Auth extends Public_Controller
             }
 
             $this->User_model->reset_failed_attempts($user['id']);
+            $this->session->sess_regenerate(true);
             $this->session->set_userdata('user_id', $user['id']);
             $this->log_activity_static($user['id'], 'Logged in', 'auth');
 
@@ -81,6 +82,7 @@ class Auth extends Public_Controller
                 'status'        => 'active',
             ]);
 
+            $this->session->sess_regenerate(true);
             $this->session->set_userdata('user_id', $user_id);
             $this->log_activity_static($user_id, 'Registered a new account', 'auth');
 

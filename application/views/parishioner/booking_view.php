@@ -37,7 +37,7 @@
       <h2 class="text-sm font-semibold text-gray-700 mb-3">Submitted Documents</h2>
       <div class="space-y-2">
         <?php foreach ($documents as $d): ?>
-        <a href="<?= base_url($d['file_path']) ?>" target="_blank" class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-parish-300 text-sm">
+        <a href="<?= site_url('secure-file/document/' . (int)$d['id']) ?>" target="_blank" rel="noopener" class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-parish-300 text-sm">
           <i class="ph ph-file text-gray-400"></i>
           <span class="flex-1 text-gray-700"><?= html_escape($d['label'] ?: $d['original_name']) ?></span>
           <?php if ($d['verified']): ?><span class="text-xs text-emerald-600 font-medium">Verified</span><?php else: ?><span class="text-xs text-gray-400">Pending review</span><?php endif; ?>
@@ -63,9 +63,18 @@
       </div>
     </div>
 
-    <?php if (!in_array($booking['status'], ['completed', 'cancelled', 'scheduled', 'approved'])): ?>
+    <?php
+      $self_service_cancel_statuses = ['draft','submitted','under_review','missing_requirements','requirements_complete','returned'];
+    ?>
+    <?php if (in_array($booking['status'], $self_service_cancel_statuses, true)): ?>
     <div class="mt-6 pt-6 border-t border-gray-100">
       <button onclick="cancelBooking(<?= $booking['id'] ?>)" class="text-sm text-red-600 hover:underline font-medium">Cancel this application</button>
+    </div>
+    <?php elseif (!in_array($booking['status'], ['completed','cancelled'], true)): ?>
+    <div class="mt-6 pt-6 border-t border-gray-100">
+      <div class="text-xs text-gray-400">
+        Need to cancel? This booking has entered a later parish workflow stage. Please contact the parish office so payment, priest assignment, or schedule implications can be reviewed.
+      </div>
     </div>
     <?php endif; ?>
   </div>

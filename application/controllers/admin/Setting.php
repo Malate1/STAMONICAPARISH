@@ -41,12 +41,38 @@ class Setting extends Role_Controller
         }
 
         if (!empty($_FILES['gcash_qr_image']['name'])) {
-            $target_dir = FCPATH . 'uploads/settings/';
-            if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
-            $ext = pathinfo($_FILES['gcash_qr_image']['name'], PATHINFO_EXTENSION);
-            $name = 'gcash_qr_' . time() . '.' . $ext;
-            if (move_uploaded_file($_FILES['gcash_qr_image']['tmp_name'], $target_dir . $name)) {
-                $this->db->where('setting_key', 'gcash_qr_image')->update('system_settings', ['setting_value' => 'uploads/settings/' . $name]);
+            $this->load->library('secure_upload');
+
+            $stored = $this->secure_upload->store(
+                $_FILES['gcash_qr_image'],
+                FCPATH . 'uploads/settings/',
+                'gcash_qr',
+                5 * 1024 * 1024,
+                [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                ]
+            );
+
+            if (!$stored['success']) {
+                return $this->json(['success' => false, 'message' => $stored['message']]);
+            }
+
+            $path = 'uploads/settings/' . $stored['filename'];
+            $existing_qr = $this->db->get_where('system_settings', ['setting_key' => 'gcash_qr_image'])->row_array();
+
+            if ($existing_qr) {
+                $this->db->where('setting_key', 'gcash_qr_image')->update('system_settings', ['setting_value' => $path]);
+            } else {
+                $this->db->insert('system_settings', ['setting_key' => 'gcash_qr_image', 'setting_value' => $path]);
+            }
+
+            if (!empty($existing_qr['setting_value'])) {
+                $old_path = ltrim(str_replace('\\', '/', $existing_qr['setting_value']), '/');
+                if (strpos($old_path, 'uploads/settings/') === 0) {
+                    $old_file = FCPATH . $old_path;
+                    if (is_file($old_file)) @unlink($old_file);
+                }
             }
         }
 

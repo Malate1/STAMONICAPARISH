@@ -11,7 +11,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | of this setting
 |
 */
-defined('SHOW_DEBUG_BACKTRACE') OR define('SHOW_DEBUG_BACKTRACE', TRUE);
+defined('SHOW_DEBUG_BACKTRACE') OR define(
+    'SHOW_DEBUG_BACKTRACE',
+    !defined('ENVIRONMENT') || ENVIRONMENT !== 'production'
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +105,7 @@ define('UPLOAD_DOCUMENTS', 'uploads/documents/');
 define('UPLOAD_CERTIFICATES', 'uploads/certificates/');
 define('UPLOAD_AVATARS', 'uploads/avatars/');
 define('UPLOAD_ANNOUNCEMENTS', 'uploads/announcements/');
+define('UPLOAD_ARCHIVE', 'uploads/archive/');
 
 // Pagination
 define('DEFAULT_PAGE_LENGTH', 10);

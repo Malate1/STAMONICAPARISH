@@ -59,4 +59,43 @@ class Certificate extends Role_Controller
         $data['payment'] = $this->Payment_model->for_payable('certificate_request', $id);
         $this->render_app('parishioner/certificate_view', $data, 'layouts/app_parishioner');
     }
+
+    public function printable($id)
+    {
+        $cert = $this->Certificate_model->get((int)$id);
+        if (!$cert
+            || (int)$cert['user_id'] !== (int)$this->current_user['id']
+            || ($cert['status'] ?? '') !== 'released') {
+            show_404();
+        }
+
+        $record = $this->Certificate_model->printable_record((int)$id);
+        if (($cert['certificate_type'] ?? '') !== 'no_record') {
+            if (!$record || ($this->db->field_exists('record_status','sacramental_records')
+                && ($record['record_status'] ?? 'verified') !== 'verified')) {
+                show_404();
+            }
+        }
+
+        $settings = [];
+        foreach ($this->db->where_in('setting_key', ['parish_name','parish_address','parish_contact'])
+            ->get('system_settings')->result_array() as $row) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+
+        $processor = 'Parish Office';
+        if (!empty($cert['processed_by'])) {
+            $staff = $this->User_model->get((int)$cert['processed_by']);
+            if ($staff) $processor = trim($staff['first_name'] . ' ' . $staff['last_name']);
+        }
+
+        $this->log_activity('Opened released certificate copy', 'certificate', $cert['request_code']);
+        $this->load->view('certificates/printable', [
+            'cert'=>$cert,
+            'record'=>$record,
+            'settings'=>$settings,
+            'verification_url'=>site_url('verify/' . $cert['qr_code_token']),
+            'processor'=>$processor,
+        ]);
+    }
 }

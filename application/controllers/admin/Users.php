@@ -151,6 +151,7 @@ class Users extends Role_Controller
             return $this->json(['success' => false, 'message' => 'The password could not be reset. Please try again.']);
         }
 
+
         $this->log_activity(
             'Reset user password',
             'users',

@@ -60,14 +60,18 @@
       <h2 class="text-sm font-semibold text-gray-700 mb-4">Actions</h2>
       <div class="space-y-2">
         <?php if ($cert['status'] === 'preparing'): ?>
-          <button onclick="prepareCert()" class="w-full px-3 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Generate Certificate &amp; QR</button>
+          <button onclick="prepareCert()" class="w-full px-3 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Prepare Certificate Verification</button>
+          <p class="text-[11px] text-gray-400 text-center mt-2">This creates the verification token and enables the print-ready certificate.</p>
         <?php endif; ?>
         <?php if ($cert['status'] === 'ready_for_release'): ?>
+          <a href="<?= site_url($base . '/certificate/print/' . (int)$cert['id']) ?>" target="_blank" rel="noopener" class="block w-full text-center px-3 py-2.5 rounded-lg bg-parish-700 hover:bg-parish-800 text-white text-sm font-medium"><i class="ph ph-printer mr-1"></i>Open Print-ready Certificate</a>
           <button onclick="releaseCert()" class="w-full px-3 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium">Mark as Released</button>
-          <a href="<?= site_url('verify/' . $cert['qr_code_token']) ?>" target="_blank" class="block text-center text-xs text-parish-700 hover:underline mt-2">Preview verification page →</a>
+          <a href="<?= site_url('verify/' . $cert['qr_code_token']) ?>" target="_blank" rel="noopener" class="block text-center text-xs text-parish-700 hover:underline mt-2">Preview verification page →</a>
         <?php endif; ?>
         <?php if ($cert['status'] === 'released'): ?>
           <div class="text-sm text-emerald-600 font-medium text-center py-2">Released on <?= format_date($cert['released_at']) ?></div>
+          <a href="<?= site_url($base . '/certificate/print/' . (int)$cert['id']) ?>" target="_blank" rel="noopener" class="block w-full text-center px-3 py-2.5 rounded-lg bg-parish-700 hover:bg-parish-800 text-white text-sm font-medium"><i class="ph ph-printer mr-1"></i>Print / Save as PDF</a>
+          <a href="<?= site_url('verify/' . $cert['qr_code_token']) ?>" target="_blank" rel="noopener" class="block text-center text-xs text-parish-700 hover:underline mt-2">Open public verification page →</a>
         <?php endif; ?>
       </div>
     </div>
@@ -76,7 +80,8 @@
 
 <script>
 function searchRecords(){
-  $.post('<?= site_url($base . '/certificate/search_records') ?>', { type: $('#search-type').val(), keyword: $('#search-keyword').val() }, function(res){
+  $.post('<?= site_url($base . '/certificate/search_records') ?>', { id: <?= (int)$cert['id'] ?>, type: $('#search-type').val(), keyword: $('#search-keyword').val() }, function(res){
+    if(!res.success){ toastr.error(res.message || 'Search failed.'); return; }
     var $r = $('#search-results').empty();
     if(!res.data.length){ $r.append('<p class="text-xs text-gray-400">No matches found.</p>'); return; }
     res.data.forEach(function(rec){

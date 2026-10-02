@@ -51,6 +51,7 @@ class Booking extends Role_Controller
         $data['history']   = $this->Booking_model->status_history($id);
         $data['payment']   = $this->Payment_model->for_payable('service_booking', $id);
         $data['priests']   = $this->Booking_model->priests_list();
+        $data['allowed_statuses'] = $this->Booking_model->allowed_status_transitions($booking);
 
         $this->render_app('admin/booking_view', $data, 'layouts/app_admin');
     }
@@ -64,7 +65,12 @@ class Booking extends Role_Controller
         $booking = $this->Booking_model->get($id);
         if (!$booking) return $this->json(['success' => false, 'message' => 'Not found.']);
 
-        $this->Booking_model->change_status($id, $status, $this->current_user['id'], $remarks);
+        if (!$this->Booking_model->change_status($id, $status, $this->current_user['id'], $remarks)) {
+            return $this->json([
+                'success' => false,
+                'message' => $this->Booking_model->transition_error() ?: 'That status change is not allowed.'
+            ]);
+        }
         if ($status === 'missing_requirements' && $remarks) {
             $this->Booking_model->update($id, ['rejection_reason' => $remarks]);
         }
@@ -82,56 +88,25 @@ class Booking extends Role_Controller
     public function assign()
     {
         $id = (int) $this->input->post('id');
-        $priest_id = $this->input->post('priest_id') ?: null;
-        $confirmed_date = $this->input->post('confirmed_date');
-
         $booking = $this->Booking_model->get($id);
-        if (!$booking) return $this->json(['success' => false, 'message' => 'Not found.']);
+        if (!$booking) return $this->json(['success'=>false,'message'=>'Not found.']);
 
-        if ($confirmed_date) {
-            if (!empty($booking['requires_priest']) && !$priest_id) {
-                return $this->json(['success' => false, 'message' => 'Select an available priest before confirming this schedule.']);
-            }
+        $result = $this->Booking_model->assign_priest_and_schedule(
+            $id,
+            $this->input->post('priest_id') ?: null,
+            $this->input->post('confirmed_date'),
+            $this->current_user['id']
+        );
 
-            $current_normalized = $booking['confirmed_date'] ? date('Y-m-d H:i:s', strtotime($booking['confirmed_date'])) : null;
-            $new_normalized = date('Y-m-d H:i:s', strtotime($confirmed_date));
-
-            if ($new_normalized !== $current_normalized) {
-                $slot = $this->Booking_model->resolve_slot(
-                    $booking['service_type_id'],
-                    $booking['booking_type'] ?? 'special',
-                    $new_normalized,
-                    $booking['schedule_rule_id'] ?? null,
-                    $id
-                );
-                if (empty($slot['valid'])) {
-                    return $this->json(['success' => false, 'message' => $slot['message'] ?? 'That schedule is not available.']);
-                }
-            }
-
-            if ($priest_id) {
-                $priest_conflict = $this->Booking_model->priest_has_conflict(
-                    $priest_id,
-                    $new_normalized,
-                    $booking['service_type_id'],
-                    $id
-                );
-                if ($priest_conflict) {
-                    return $this->json([
-                        'success' => false,
-                        'message' => 'This priest already has ' . $priest_conflict['service_name'] . ' during that time. Please choose another priest or schedule.'
-                    ]);
-                }
-            }
-        }
-
-        $this->Booking_model->update($id, ['assigned_priest_id' => $priest_id, 'confirmed_date' => $confirmed_date ?: null]);
-        if ($confirmed_date) {
-            $this->Booking_model->change_status($id, 'scheduled', $this->current_user['id'], 'Schedule confirmed');
+        if (!$result) {
+            return $this->json([
+                'success'=>false,
+                'message'=>$this->Booking_model->transition_error() ?: 'The assignment could not be saved.'
+            ]);
         }
 
         $this->log_activity('Assigned priest / confirmed schedule', 'booking', $booking['booking_code']);
-        $this->json(['success' => true, 'message' => 'Assignment saved.']);
+        $this->json(['success'=>true,'message'=>$result['message']]);
     }
 
     public function verify_document()

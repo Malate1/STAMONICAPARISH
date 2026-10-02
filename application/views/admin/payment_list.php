@@ -32,7 +32,8 @@ function viewPayment(id){
       '<div class="flex justify-between"><span class="text-gray-400">Reference No.</span><span class="font-medium">'+ (p.gcash_reference_no || '—') +'</span></div>' +
       '<div class="flex justify-between"><span class="text-gray-400">Status</span><span class="font-medium">'+ p.status +'</span></div>';
     if (p.proof_of_payment) {
-      html += '<a href="<?= base_url() ?>' + p.proof_of_payment + '" target="_blank" class="block mt-2"><img src="<?= base_url() ?>' + p.proof_of_payment + '" class="rounded-lg border border-gray-200 max-h-64 mx-auto" onerror="this.replaceWith(\'View proof of payment (PDF) →\')"></a>';
+      var proofUrl = '<?= site_url('secure-file/payment/') ?>' + p.id;
+      html += '<a href="' + proofUrl + '" target="_blank" rel="noopener" class="block mt-2"><img src="' + proofUrl + '" class="rounded-lg border border-gray-200 max-h-64 mx-auto" onerror="this.replaceWith(\'View proof of payment (PDF) →\')"></a>';
     }
     $('#pay-details').html(html);
 

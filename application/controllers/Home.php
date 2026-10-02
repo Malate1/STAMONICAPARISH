@@ -207,13 +207,16 @@ class Home extends Public_Controller
             return $this->json(['success' => false, 'message' => strip_tags(validation_errors())]);
         }
 
-        $this->Event_model->register($event_id, [
+        $result = $this->Event_model->register($event_id, [
             'user_id'        => $this->current_user['id'] ?? null,
-            'full_name'      => $this->input->post('full_name', true),
-            'contact_number' => $this->input->post('contact_number', true),
+            'full_name'      => trim((string)$this->input->post('full_name', true)),
+            'contact_number' => trim((string)$this->input->post('contact_number', true)),
         ]);
 
-        $this->json(['success' => true, 'message' => 'You are registered for this event. See you there!']);
+        $this->json([
+            'success' => !empty($result['success']),
+            'message' => $result['message'] ?? 'The registration could not be saved.'
+        ]);
     }
 
     /** AJAX: express interest to join a ministry */

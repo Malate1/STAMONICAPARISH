@@ -303,20 +303,27 @@ class Community extends Role_Controller
     private function upload_image($field,$folder,$prefix)
     {
         if (empty($_FILES[$field]['name'])) return ['success'=>true,'path'=>null];
-        if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) return ['success'=>false,'message'=>'Image upload did not complete successfully.'];
-        if ((int)$_FILES[$field]['size'] > 5*1024*1024) return ['success'=>false,'message'=>'Image must be 5 MB or smaller.'];
 
-        $ext = strtolower(pathinfo($_FILES[$field]['name'],PATHINFO_EXTENSION));
-        if (!in_array($ext,['jpg','jpeg','png','webp'],true)) return ['success'=>false,'message'=>'Use a JPG, PNG or WebP image.'];
-        if (!@getimagesize($_FILES[$field]['tmp_name'])) return ['success'=>false,'message'=>'The uploaded file is not a valid image.'];
+        $this->load->library('secure_upload');
+        $stored = $this->secure_upload->store(
+            $_FILES[$field],
+            FCPATH . 'uploads/' . $folder . '/',
+            $prefix,
+            5 * 1024 * 1024,
+            [
+                'image/jpeg'=>'jpg',
+                'image/png'=>'png',
+                'image/webp'=>'webp',
+            ]
+        );
 
-        $dir = FCPATH . 'uploads/' . $folder . '/';
-        if (!is_dir($dir) && !@mkdir($dir,0755,true)) return ['success'=>false,'message'=>'The upload directory could not be created.'];
+        if (!$stored['success']) return $stored;
+        if (!@getimagesize(FCPATH . 'uploads/' . $folder . '/' . $stored['filename'])) {
+            @unlink(FCPATH . 'uploads/' . $folder . '/' . $stored['filename']);
+            return ['success'=>false,'message'=>'The uploaded file is not a valid image.'];
+        }
 
-        $name = $prefix . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . ($ext === 'jpeg' ? 'jpg' : $ext);
-        if (!move_uploaded_file($_FILES[$field]['tmp_name'],$dir.$name)) return ['success'=>false,'message'=>'The image could not be saved.'];
-
-        return ['success'=>true,'path'=>'uploads/'.$folder.'/'.$name];
+        return ['success'=>true,'path'=>'uploads/'.$folder.'/'.$stored['filename']];
     }
 
     private function delete_local_image($path,$prefix)

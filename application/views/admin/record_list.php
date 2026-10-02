@@ -14,6 +14,18 @@
   </div>
 </div>
 
+<?php if (isset($record_workflow_ready) && !$record_workflow_ready): ?>
+<div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+  <div class="font-semibold"><i class="ph ph-warning-circle mr-1"></i>Sacramental registry verification upgrade is not installed yet.</div>
+  <div class="text-xs mt-1">Run <code>database/migrations/20260925_sacramental_record_workflow.sql</code>. Existing records remain verified; newly encoded and booking-generated records will then use Draft → Verified review.</div>
+</div>
+<?php elseif (!empty($record_workflow_ready)): ?>
+<div class="mb-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-800">
+  <div class="font-semibold"><i class="ph ph-seal-check mr-1"></i>Registry integrity workflow</div>
+  <div class="text-xs mt-1">New or edited records are saved as Draft. A different authorized staff member must compare the entry with the source parish register before marking it Verified.</div>
+</div>
+<?php endif; ?>
+
 <div class="bg-white rounded-2xl border border-gray-100 p-6">
   <div class="overflow-x-auto">
     <table id="rec-table" class="w-full text-sm">
@@ -72,6 +84,28 @@ var base = '<?= $base ?>';
 function openModal(){ $('#rec-modal').removeClass('hidden').addClass('flex'); }
 function closeModal(){ $('#rec-modal').addClass('hidden').removeClass('flex'); }
 function resetForm(){ $('#rec-form')[0].reset(); $('#f-id').val(''); $('#rec-modal-title').text('Add Record'); }
+function verifyRecord(id){
+  Swal.fire({
+    icon:'question',
+    title:'Verify this registry record?',
+    text:'Confirm that you personally compared the encoded details with the original parish register or other authoritative source.',
+    showCancelButton:true,
+    confirmButtonText:'Mark Verified',
+    confirmButtonColor:'#235a38'
+  }).then(function(result){
+    if(!result.isConfirmed) return;
+
+    $.post('<?= site_url('/') ?>' + base + '/record/verify/' + id, {}, function(res){
+      if(res.success){
+        toastr.success(res.message);
+        table.ajax.reload(null, false);
+      }else{
+        toastr.error(res.message);
+      }
+    });
+  });
+}
+
 function editRecord(id){
   $.get('<?= site_url('/') ?>' + base + '/record/get/' + id, function(res){
     var d = res.data;

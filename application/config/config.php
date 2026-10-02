@@ -229,7 +229,9 @@ $config['allow_get_array'] = TRUE;
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = 0;
+// Keep production errors out of the browser but write actual failures to
+// application/logs so 500 responses can be diagnosed without exposing paths.
+$config['log_threshold'] = (defined('ENVIRONMENT') && ENVIRONMENT === 'production') ? 1 : 1;
 
 /*
 |--------------------------------------------------------------------------
@@ -330,7 +332,26 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/userguide3/libraries/encryption.html
 |
 */
-$config['encryption_key'] = 'CHANGE_THIS_TO_A_RANDOM_32_CHAR_STRING';
+/*
+ * Keep the application key outside version control. InfinityFree does not
+ * require Composer/.env support for this: application/config/secrets.php can
+ * return an array containing "encryption_key". An environment variable takes
+ * precedence when the host provides one.
+ */
+$stamonica_secrets = [];
+$stamonica_secret_file = APPPATH . 'config/secrets.php';
+if (is_file($stamonica_secret_file)) {
+    $loaded_secrets = require $stamonica_secret_file;
+    if (is_array($loaded_secrets)) {
+        $stamonica_secrets = $loaded_secrets;
+    }
+}
+$config['encryption_key'] = getenv('STAMONICA_ENCRYPTION_KEY')
+    ?: ($stamonica_secrets['encryption_key'] ?? '');
+
+if ($config['encryption_key'] === '' && defined('ENVIRONMENT') && ENVIRONMENT === 'production') {
+    show_error('Application security key is not configured.', 503, 'Configuration Error');
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -394,7 +415,7 @@ $config['sess_expiration'] = 7200;
 $config['sess_save_path'] = NULL;
 $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
-$config['sess_regenerate_destroy'] = FALSE;
+$config['sess_regenerate_destroy'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------
@@ -415,8 +436,9 @@ $config['sess_regenerate_destroy'] = FALSE;
 $config['cookie_prefix']	= '';
 $config['cookie_domain']	= '';
 $config['cookie_path']		= '/';
-$config['cookie_secure']	= FALSE;
-$config['cookie_httponly'] 	= FALSE;
+// Production is HTTPS-only. Keep local Laragon development usable over HTTP.
+$config['cookie_secure']	= (defined('ENVIRONMENT') && ENVIRONMENT === 'production');
+$config['cookie_httponly'] 	= TRUE;
 $config['cookie_samesite'] 	= 'Lax';
 
 /*
@@ -461,11 +483,14 @@ $config['global_xss_filtering'] = FALSE;
 | 'csrf_regenerate' = Regenerate token on every submission
 | 'csrf_exclude_uris' = Array of URIs which ignore CSRF checks
 */
-$config['csrf_protection'] = FALSE;
-$config['csrf_token_name'] = 'csrf_test_name';
-$config['csrf_cookie_name'] = 'csrf_cookie_name';
+$config['csrf_protection'] = TRUE;
+$config['csrf_token_name'] = 'stamonica_csrf';
+$config['csrf_cookie_name'] = 'stamonica_csrf_cookie';
 $config['csrf_expire'] = 7200;
-$config['csrf_regenerate'] = TRUE;
+// Keep one token for the session/page lifetime so AJAX-heavy admin screens do
+// not invalidate another in-flight request. It still expires with the CSRF
+// cookie and is regenerated on a new session.
+$config['csrf_regenerate'] = FALSE;
 $config['csrf_exclude_uris'] = array();
 
 /*

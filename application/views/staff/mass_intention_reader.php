@@ -36,6 +36,7 @@ if (!$selected_mass && $mass_date && $schedule_id) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
   <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+  <?php $this->load->view('partials/security_bootstrap'); ?>
   <style>
     :root{--green:#173b29;--green2:#235a38;--gold:#c8901d;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--paper:#fff;--bg:#f3f5f4}
     *{box-sizing:border-box}
@@ -170,6 +171,9 @@ function completeMass(){
   var body = new URLSearchParams();
   body.set('mass_date', <?= json_encode($mass_date) ?>);
   body.set('schedule_id', <?= json_encode((string)$schedule_id) ?>);
+  if(window.StaMonicaSecurity){
+    body.set(window.StaMonicaSecurity.csrfName, window.StaMonicaSecurity.csrfHash);
+  }
 
   fetch(<?= json_encode(site_url('staff/mass-intention-reader/complete')) ?>, {
     method:'POST',

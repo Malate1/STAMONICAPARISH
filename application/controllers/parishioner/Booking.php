@@ -200,29 +200,44 @@ class Booking extends Role_Controller
 
     private function _handle_uploads($booking_id)
     {
+        $this->load->library('secure_upload');
+
         $req_ids = $this->input->post('requirement_id') ?: [];
         $count = count($_FILES['documents']['name']);
         $target_dir = FCPATH . UPLOAD_DOCUMENTS;
-        if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
 
         for ($i = 0; $i < $count; $i++) {
-            if ($_FILES['documents']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            if (empty($_FILES['documents']['name'][$i])) continue;
 
-            $ext = pathinfo($_FILES['documents']['name'][$i], PATHINFO_EXTENSION);
-            $safe_name = 'doc_' . $booking_id . '_' . uniqid() . '.' . $ext;
-            $dest = $target_dir . $safe_name;
+            $file = [
+                'name' => $_FILES['documents']['name'][$i],
+                'type' => $_FILES['documents']['type'][$i] ?? null,
+                'tmp_name' => $_FILES['documents']['tmp_name'][$i],
+                'error' => $_FILES['documents']['error'][$i],
+                'size' => $_FILES['documents']['size'][$i],
+            ];
 
-            if (move_uploaded_file($_FILES['documents']['tmp_name'][$i], $dest)) {
-                $this->Booking_model->add_document([
-                    'booking_id'     => $booking_id,
-                    'requirement_id' => $req_ids[$i] ?? null,
-                    'file_name'      => $safe_name,
-                    'original_name'  => $_FILES['documents']['name'][$i],
-                    'file_path'      => UPLOAD_DOCUMENTS . $safe_name,
-                    'mime_type'      => $_FILES['documents']['type'][$i],
-                    'uploaded_at'    => date('Y-m-d H:i:s'),
-                ]);
+            $stored = $this->secure_upload->store(
+                $file,
+                $target_dir,
+                'doc_' . (int) $booking_id,
+                5 * 1024 * 1024
+            );
+
+            if (!$stored['success']) {
+                log_message('error', 'Booking document upload rejected for booking ' . (int) $booking_id . ': ' . $stored['message']);
+                continue;
             }
+
+            $this->Booking_model->add_document([
+                'booking_id'     => $booking_id,
+                'requirement_id' => $req_ids[$i] ?? null,
+                'file_name'      => $stored['filename'],
+                'original_name'  => $stored['original_name'],
+                'file_path'      => UPLOAD_DOCUMENTS . $stored['filename'],
+                'mime_type'      => $stored['mime_type'],
+                'uploaded_at'    => date('Y-m-d H:i:s'),
+            ]);
         }
     }
 
@@ -247,11 +262,29 @@ class Booking extends Role_Controller
         if (!$booking || (int) $booking['user_id'] !== (int) $this->current_user['id']) {
             return $this->json(['success' => false, 'message' => 'Not found.']);
         }
-        if (in_array($booking['status'], ['completed', 'cancelled'], true)) {
-            return $this->json(['success' => false, 'message' => 'This application can no longer be cancelled.']);
+        $self_service_cancel_statuses = [
+            'draft',
+            'submitted',
+            'under_review',
+            'missing_requirements',
+            'requirements_complete',
+            'returned',
+        ];
+
+        if (!in_array($booking['status'], $self_service_cancel_statuses, true)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'This booking has already entered priest review, payment, approval, or scheduling. Please contact the parish office if you need to request a cancellation.'
+            ]);
         }
 
-        $this->Booking_model->change_status($id, 'cancelled', $this->current_user['id'], 'Cancelled by parishioner');
+        if (!$this->Booking_model->change_status($id, 'cancelled', $this->current_user['id'], 'Cancelled by parishioner')) {
+            return $this->json([
+                'success' => false,
+                'message' => $this->Booking_model->transition_error() ?: 'This application can no longer be cancelled.'
+            ]);
+        }
+
         $this->json(['success' => true, 'message' => 'Application cancelled.']);
     }
 }

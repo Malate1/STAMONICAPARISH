@@ -14,6 +14,21 @@ class Base_Controller extends CI_Controller
     public function __construct()
     {
         parent::__construct();
+
+        // Baseline browser hardening for both public and authenticated pages.
+        // Keep CSP separate for now because the project still uses several
+        // CDN-hosted assets and inline scripts.
+        $this->output
+            ->set_header('X-Content-Type-Options: nosniff')
+            ->set_header('X-Frame-Options: SAMEORIGIN')
+            ->set_header('Referrer-Policy: strict-origin-when-cross-origin')
+            ->set_header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+
+        if (defined('ENVIRONMENT') && ENVIRONMENT === 'production'
+            && (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')) {
+            $this->output->set_header('Strict-Transport-Security: max-age=31536000');
+        }
+
         $this->load->model('User_model');
         $this->_load_current_user();
     }
@@ -132,6 +147,7 @@ class Auth_Controller extends Base_Controller
             $this->flash_info('Please log in to continue.');
             redirect('login');
         }
+
     }
 }
 

@@ -42,8 +42,83 @@ class Event_model extends CI_Model
 
     public function register($event_id, array $data)
     {
-        $this->db->insert('event_registrations', array_merge($data, ['event_id' => $event_id]));
-        return $this->db->insert_id();
+        $event_id = (int)$event_id;
+        $this->db->trans_begin();
+
+        $event = $this->db->query(
+            'SELECT * FROM events WHERE id = ? FOR UPDATE',
+            [$event_id]
+        )->row_array();
+
+        if (!$event) {
+            $this->db->trans_rollback();
+            return ['success'=>false,'message'=>'Event not found.'];
+        }
+
+        if (($event['status'] ?? '') !== 'published' || empty($event['allow_registration'])) {
+            $this->db->trans_rollback();
+            return ['success'=>false,'message'=>'Registration is not open for this event.'];
+        }
+
+        $event_end = !empty($event['end_date']) ? $event['end_date'] : $event['event_date'];
+        if ($event_end && $event_end < date('Y-m-d')) {
+            $this->db->trans_rollback();
+            return ['success'=>false,'message'=>'Registration is closed because this event has already ended.'];
+        }
+
+        $user_id = !empty($data['user_id']) ? (int)$data['user_id'] : null;
+        if ($user_id) {
+            $duplicate = $this->db->where('event_id',$event_id)
+                ->where('user_id',$user_id)
+                ->where_in('status',['registered','attended'])
+                ->count_all_results('event_registrations');
+            if ($duplicate) {
+                $this->db->trans_rollback();
+                return ['success'=>false,'message'=>'You are already registered for this event.'];
+            }
+        } else {
+            $contact = trim((string)($data['contact_number'] ?? ''));
+            if ($contact !== '') {
+                $duplicate = $this->db->where('event_id',$event_id)
+                    ->where('contact_number',$contact)
+                    ->where_in('status',['registered','attended'])
+                    ->count_all_results('event_registrations');
+                if ($duplicate) {
+                    $this->db->trans_rollback();
+                    return ['success'=>false,'message'=>'A registration using this contact number already exists for this event.'];
+                }
+            }
+        }
+
+        $limit = isset($event['registration_limit']) && $event['registration_limit'] !== null
+            ? (int)$event['registration_limit']
+            : 0;
+
+        if ($limit > 0) {
+            $current = (int)$this->db->where('event_id',$event_id)
+                ->where_in('status',['registered','attended'])
+                ->count_all_results('event_registrations');
+            if ($current >= $limit) {
+                $this->db->trans_rollback();
+                return ['success'=>false,'message'=>'This event has reached its registration limit.'];
+            }
+        }
+
+        $payload = array_merge($data, [
+            'event_id'=>$event_id,
+            'status'=>'registered',
+            'registered_at'=>date('Y-m-d H:i:s'),
+        ]);
+        $this->db->insert('event_registrations',$payload);
+        $id = (int)$this->db->insert_id();
+
+        if (!$id || $this->db->trans_status() === false) {
+            $this->db->trans_rollback();
+            return ['success'=>false,'message'=>'The registration could not be saved. Please try again.'];
+        }
+
+        $this->db->trans_commit();
+        return ['success'=>true,'id'=>$id,'message'=>'You are registered for this event. See you there!'];
     }
 
     public function registration_count($event_id)

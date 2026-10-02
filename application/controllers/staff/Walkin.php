@@ -368,41 +368,33 @@ class Walkin extends Role_Controller
             return $result;
         }
 
+        $this->load->library('secure_upload');
+
         $requirement_ids = $this->input->post('requirement_id') ?: [];
         $count = count($_FILES['documents']['name']);
         $target_dir = FCPATH . UPLOAD_DOCUMENTS;
 
-        if (!is_dir($target_dir) && !@mkdir($target_dir, 0755, true)) {
-            $result['warnings'][] = 'The booking was saved but the document upload directory is unavailable.';
-            return $result;
-        }
-
-        $allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf'];
-
         for ($i = 0; $i < $count; $i++) {
             if (empty($_FILES['documents']['name'][$i])) continue;
 
-            if ($_FILES['documents']['error'][$i] !== UPLOAD_ERR_OK) {
-                $result['warnings'][] = $_FILES['documents']['name'][$i] . ' could not be uploaded.';
-                continue;
-            }
+            $file = [
+                'name' => $_FILES['documents']['name'][$i],
+                'type' => $_FILES['documents']['type'][$i] ?? null,
+                'tmp_name' => $_FILES['documents']['tmp_name'][$i],
+                'error' => $_FILES['documents']['error'][$i],
+                'size' => $_FILES['documents']['size'][$i],
+            ];
 
-            if ((int) $_FILES['documents']['size'][$i] > 5 * 1024 * 1024) {
-                $result['warnings'][] = $_FILES['documents']['name'][$i] . ' is larger than 5 MB.';
-                continue;
-            }
+            $stored = $this->secure_upload->store(
+                $file,
+                $target_dir,
+                'doc_' . (int) $booking_id,
+                5 * 1024 * 1024
+            );
 
-            $extension = strtolower(pathinfo($_FILES['documents']['name'][$i], PATHINFO_EXTENSION));
-            if (!in_array($extension, $allowed_extensions, true)) {
-                $result['warnings'][] = $_FILES['documents']['name'][$i] . ' is not an accepted JPG, PNG or PDF file.';
-                continue;
-            }
-
-            $safe_name = 'doc_' . $booking_id . '_' . bin2hex(random_bytes(6)) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
-            $destination = $target_dir . $safe_name;
-
-            if (!move_uploaded_file($_FILES['documents']['tmp_name'][$i], $destination)) {
-                $result['warnings'][] = $_FILES['documents']['name'][$i] . ' could not be saved.';
+            if (!$stored['success']) {
+                $result['warnings'][] = $stored['original_name'] ?? $file['name'];
+                $result['warnings'][] = $stored['message'];
                 continue;
             }
 
@@ -411,10 +403,10 @@ class Walkin extends Role_Controller
                 'requirement_id' => isset($requirement_ids[$i]) && $requirement_ids[$i] !== ''
                     ? (int) $requirement_ids[$i]
                     : null,
-                'file_name' => $safe_name,
-                'original_name' => $_FILES['documents']['name'][$i],
-                'file_path' => UPLOAD_DOCUMENTS . $safe_name,
-                'mime_type' => $_FILES['documents']['type'][$i] ?: null,
+                'file_name' => $stored['filename'],
+                'original_name' => $stored['original_name'],
+                'file_path' => UPLOAD_DOCUMENTS . $stored['filename'],
+                'mime_type' => $stored['mime_type'],
                 'uploaded_at' => date('Y-m-d H:i:s'),
             ]);
 

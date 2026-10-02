@@ -81,6 +81,11 @@ $route['projects/(:any)']            = 'home/project_detail/$1';
 $route['donate']                     = 'home/donate';
 $route['verify/(:any)']              = 'home/verify_certificate/$1';
 
+// ---- Authenticated private files ----
+$route['secure-file/document/(:num)'] = 'secure_file/document/$1';
+$route['secure-file/payment/(:num)']  = 'secure_file/payment/$1';
+$route['secure-file/archive/(:num)']  = 'secure_file/archive/$1';
+
 // ---- Auth ----
 $route['login']                      = 'auth/login';
 $route['register']                   = 'auth/register';
@@ -99,6 +104,7 @@ $route['my/bookings/(:num)']         = 'parishioner/booking/view/$1';
 $route['my/certificates']            = 'parishioner/certificate';
 $route['my/certificates/new']        = 'parishioner/certificate/create';
 $route['my/certificates/store']      = 'parishioner/certificate/store';
+$route['my/certificates/print/(:num)'] = 'parishioner/certificate/printable/$1';
 $route['my/certificates/(:num)']     = 'parishioner/certificate/view/$1';
 $route['my/payments']                = 'parishioner/payment';
 $route['my/payments/pay/(:any)/(:num)'] = 'parishioner/payment/pay/$1/$2';
@@ -130,6 +136,15 @@ $route['admin/community/cluster-delete/(:num)']    = 'admin/community/cluster_de
 $route['admin/community/official-get/(:num)']      = 'admin/community/official_get/$1';
 $route['admin/community/official-store']           = 'admin/community/official_store';
 $route['admin/community/official-delete/(:num)']   = 'admin/community/official_delete/$1';
+$route['admin/record/verify/(:num)']                  = 'admin/record/verify/$1';
+$route['admin/certificate/print/(:num)']              = 'admin/certificate/printable/$1';
+$route['admin/archive']                               = 'admin/archive';
+$route['admin/archive/batch-store']                   = 'admin/archive/batch_store';
+$route['admin/archive/batch-status/(:num)']           = 'admin/archive/batch_status/$1';
+$route['admin/archive/page-upload']                   = 'admin/archive/page_upload';
+$route['admin/archive/page-delete/(:num)']            = 'admin/archive/page_delete/$1';
+$route['admin/archive/import-csv']                    = 'admin/archive/import_csv';
+$route['admin/archive/template']                      = 'admin/archive/template';
 $route['admin/project/datatable']                       = 'admin/project/datatable';
 $route['admin/project/get/(:num)']                      = 'admin/project/get/$1';
 $route['admin/project/store']                           = 'admin/project/store';
@@ -141,6 +156,8 @@ $route['admin/event/activities/seed/(:num)']           = 'admin/event/seed_activ
 $route['admin/event/activity/save']                    = 'admin/event/save_activity';
 $route['admin/event/activity/delete/(:num)']           = 'admin/event/delete_activity/$1';
 $route['admin/users/reset-password/(:num)']              = 'admin/users/reset_password/$1';
+$route['admin/audit/datatable']                          = 'admin/audit/datatable';
+$route['admin/system-health']                             = 'admin/system_health';
 $route['admin/service_type/get/(:num)']                    = 'admin/service_type/get/$1';
 $route['admin/service_type/store']                         = 'admin/service_type/store';
 $route['admin/service_type/add-requirement']               = 'admin/service_type/add_requirement';
@@ -151,6 +168,15 @@ $route['admin']                      = 'admin/dashboard';
 $route['admin/(:any)']               = 'admin/$1';
 
 // ---- Secretary area ----
+$route['staff/record/verify/(:num)']                  = 'staff/record/verify/$1';
+$route['staff/certificate/print/(:num)']              = 'staff/certificate/printable/$1';
+$route['staff/archive']                               = 'admin/archive';
+$route['staff/archive/batch-store']                   = 'admin/archive/batch_store';
+$route['staff/archive/batch-status/(:num)']           = 'admin/archive/batch_status/$1';
+$route['staff/archive/page-upload']                   = 'admin/archive/page_upload';
+$route['staff/archive/page-delete/(:num)']            = 'admin/archive/page_delete/$1';
+$route['staff/archive/import-csv']                    = 'admin/archive/import_csv';
+$route['staff/archive/template']                      = 'admin/archive/template';
 $route['staff/community']                              = 'admin/community';
 $route['staff/walkin/lookup']                         = 'staff/walkin/lookup';
 $route['staff/walkin/availability']                   = 'staff/walkin/availability';
