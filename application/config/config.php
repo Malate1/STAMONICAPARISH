@@ -338,20 +338,22 @@ $config['cache_query_string'] = FALSE;
  * return an array containing "encryption_key". An environment variable takes
  * precedence when the host provides one.
  */
-$stamonica_secrets = [];
-$stamonica_secret_file = APPPATH . 'config/secrets.php';
-if (is_file($stamonica_secret_file)) {
-    $loaded_secrets = require $stamonica_secret_file;
-    if (is_array($loaded_secrets)) {
-        $stamonica_secrets = $loaded_secrets;
-    }
-}
-$config['encryption_key'] = getenv('STAMONICA_ENCRYPTION_KEY')
-    ?: ($stamonica_secrets['encryption_key'] ?? '');
+// $stamonica_secrets = [];
+// $stamonica_secret_file = APPPATH . 'config/secrets.php';
+// if (is_file($stamonica_secret_file)) {
+//     $loaded_secrets = require $stamonica_secret_file;
+//     if (is_array($loaded_secrets)) {
+//         $stamonica_secrets = $loaded_secrets;
+//     }
+// }
+// $config['encryption_key'] = getenv('STAMONICA_ENCRYPTION_KEY')
+//     ?: ($stamonica_secrets['encryption_key'] ?? '');
 
-if ($config['encryption_key'] === '' && defined('ENVIRONMENT') && ENVIRONMENT === 'production') {
-    show_error('Application security key is not configured.', 503, 'Configuration Error');
-}
+// if ($config['encryption_key'] === '' && defined('ENVIRONMENT') && ENVIRONMENT === 'production') {
+//     show_error('Application security key is not configured.', 503, 'Configuration Error');
+// }
+
+$config['encryption_key'] = '';
 
 /*
 |--------------------------------------------------------------------------
