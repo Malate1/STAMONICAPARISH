@@ -97,13 +97,13 @@ class Walkin extends Role_Controller
         }
 
         if ($booking_type === 'regular') {
-            $slots = $this->Booking_model->upcoming_regular_slots($service_id, 10);
+            $slots = $this->Booking_model->upcoming_regular_slots($service_id, 10, 2);
 
             return $this->json([
                 'success' => true,
                 'slots' => $slots,
                 'message' => empty($slots)
-                    ? 'No regular slots are currently available. The parish schedule may still be under configuration or all published slots are full.'
+                    ? 'No regular slots are currently available within the next 2 months. The parish schedule may still be under configuration or all published slots are full.'
                     : '',
             ]);
         }
