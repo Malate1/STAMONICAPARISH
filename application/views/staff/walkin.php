@@ -332,6 +332,60 @@ function escapeHtml(value){
   return $('<div>').text(value == null ? '' : String(value)).html();
 }
 
+function syncSponsorRows(context){
+  var $scope = context ? $(context) : $(document);
+  var $fieldsets = $scope.hasClass('sponsor-fieldset') ? $scope : $scope.find('.sponsor-fieldset');
+
+  $fieldsets.each(function(){
+    var names = [];
+    $(this).find('.sponsor-name').each(function(){
+      var value = $.trim($(this).val());
+      if(value) names.push(value);
+    });
+    $(this).find('.sponsors-hidden').val(names.join('\n'));
+  });
+}
+
+function renumberSponsorRows($fieldset){
+  $fieldset.find('.sponsor-row').each(function(index){
+    $(this).find('.sponsor-row-label').text('Sponsor ' + (index + 1));
+  });
+}
+
+function addSponsorRow(button){
+  var $fieldset = $(button).closest('.sponsor-fieldset');
+  var $rows = $fieldset.find('.sponsor-rows');
+  var next = $rows.find('.sponsor-row').length + 1;
+  var html = '<div class="sponsor-row flex items-end gap-2">' +
+    '<div class="flex-1 min-w-0">' +
+      '<label class="sponsor-row-label block text-xs font-medium text-gray-500 mb-1.5">Sponsor ' + next + '</label>' +
+      '<input type="text" class="sponsor-name w-full px-4 py-3 rounded-xl border border-gray-200 text-sm" placeholder="Godparent / Sponsor full name">' +
+    '</div>' +
+    '<button type="button" onclick="removeSponsorRow(this)" class="h-[46px] w-[46px] shrink-0 inline-flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition" title="Remove sponsor"><i class="ph ph-trash"></i></button>' +
+  '</div>';
+
+  $rows.append(html);
+  $rows.find('.sponsor-name').last().focus();
+}
+
+function removeSponsorRow(button){
+  var $fieldset = $(button).closest('.sponsor-fieldset');
+  var $rows = $fieldset.find('.sponsor-row');
+
+  if($rows.length <= 1){
+    $rows.find('.sponsor-name').val('').focus();
+  }else{
+    $(button).closest('.sponsor-row').remove();
+  }
+
+  renumberSponsorRows($fieldset);
+  syncSponsorRows($fieldset);
+}
+
+$(document).on('input', '.sponsor-name', function(){
+  syncSponsorRows($(this).closest('.sponsor-fieldset'));
+});
+
 function peso(value){
   return '₱' + Number(value || 0).toLocaleString('en-PH', {
     minimumFractionDigits: 2,
@@ -842,14 +896,26 @@ function renderDetailsFields(){
   if(key === 'baptism'){
     html =
       '<div><h3 class="text-sm font-semibold text-gray-700 mb-3">Child Information</h3><div class="grid sm:grid-cols-2 gap-4">' +
-        '<input required name="child_name" placeholder="Child\'s Full Name" class="px-4 py-3 rounded-xl border border-gray-200 text-sm">' +
-        '<input required type="date" name="child_birth_date" class="px-4 py-3 rounded-xl border border-gray-200 text-sm">' +
+        '<div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Child\'s Full Name</label><input required name="child_name" placeholder="Enter child\'s full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm"></div>' +
+        '<div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Child\'s Birthdate</label><input required type="date" name="child_birth_date" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm"></div>' +
       '</div></div>' +
       '<div><h3 class="text-sm font-semibold text-gray-700 mb-3">Parents\' Information</h3><div class="grid sm:grid-cols-2 gap-4">' +
         '<input required name="father_name" placeholder="Father\'s Full Name" class="px-4 py-3 rounded-xl border border-gray-200 text-sm">' +
         '<input required name="mother_name" placeholder="Mother\'s Full Name" class="px-4 py-3 rounded-xl border border-gray-200 text-sm">' +
       '</div></div>' +
-      '<div><h3 class="text-sm font-semibold text-gray-700 mb-3">Godparents / Sponsors</h3><textarea name="sponsors" rows="3" placeholder="List of godparents (one per line)" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm"></textarea></div>';
+      '<div class="sponsor-fieldset">' +
+        '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">' +
+          '<div><h3 class="text-sm font-semibold text-gray-700">Godparents / Sponsors</h3><p class="text-xs text-gray-400 mt-0.5">Add one sponsor per row.</p></div>' +
+          '<button type="button" onclick="addSponsorRow(this)" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-parish-200 bg-parish-50 text-parish-700 text-xs font-semibold hover:bg-parish-100 transition"><i class="ph ph-plus"></i> Add Sponsor</button>' +
+        '</div>' +
+        '<div class="sponsor-rows space-y-3">' +
+          '<div class="sponsor-row flex items-end gap-2">' +
+            '<div class="flex-1 min-w-0"><label class="sponsor-row-label block text-xs font-medium text-gray-500 mb-1.5">Sponsor 1</label><input type="text" class="sponsor-name w-full px-4 py-3 rounded-xl border border-gray-200 text-sm" placeholder="Godparent / Sponsor full name"></div>' +
+            '<button type="button" onclick="removeSponsorRow(this)" class="h-[46px] w-[46px] shrink-0 inline-flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition" title="Remove sponsor"><i class="ph ph-trash"></i></button>' +
+          '</div>' +
+        '</div>' +
+        '<input type="hidden" name="sponsors" class="sponsors-hidden">' +
+      '</div>';
   }else if(key === 'wedding'){
     html =
       '<div><h3 class="text-sm font-semibold text-gray-700 mb-3">Bride & Groom Information</h3><div class="grid sm:grid-cols-2 gap-4">' +
@@ -876,6 +942,9 @@ function renderDetailsFields(){
 
   $('#details-step-title').text(currentService.name + ' details');
   $('#service-details-fields').html(html);
+  if(window.initParishDatepickers){
+    window.initParishDatepickers($('#service-details-fields'));
+  }
 
   $('#service-details-fields [required]').on('input change', function(){
     $(this).removeClass('border-red-400 ring-2 ring-red-100');
@@ -994,6 +1063,7 @@ $('#walkin-form').on('submit', function(e){
   }).then(function(result){
     if(!result.isConfirmed) return;
 
+    syncSponsorRows($('#walkin-form'));
     var formData = new FormData(document.getElementById('walkin-form'));
     var $button = $('#submit-walkin');
     var original = $button.html();

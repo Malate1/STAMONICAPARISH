@@ -220,7 +220,8 @@
     '[data-native-select]',
     '.dataTables_length select',
     '.swal2-container select',
-    '.select2-container select'
+    '.select2-container select',
+    '.ui-datepicker select'
   ].join(',');
 
   var DATE_SKIP = [
@@ -259,7 +260,7 @@
     $selects.each(function(){
       var $select = $(this);
 
-      if($select.is(SELECT_SKIP) || $select.closest('.dataTables_length, .swal2-container').length) return;
+      if($select.is(SELECT_SKIP) || $select.closest('.dataTables_length, .swal2-container, .ui-datepicker').length) return;
       if($select.hasClass('select2-hidden-accessible')) return;
 
       var hasEmpty = $select.find('option[value=""]').length > 0;
@@ -411,7 +412,7 @@
       window.requestAnimationFrame(function(){
         roots.forEach(function(root){
           // Never enhance Select2's own generated DOM or SweetAlert controls.
-          if($(root).closest('.select2-container, .swal2-container').length) return;
+          if($(root).closest('.select2-container, .swal2-container, .ui-datepicker').length) return;
           initEnhancements(root);
         });
       });
